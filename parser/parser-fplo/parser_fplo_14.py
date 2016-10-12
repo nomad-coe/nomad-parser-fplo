@@ -58,15 +58,14 @@ class ParserFplo14(object):
                        'program_basis_set_type': 'local-orbital minimum-basis',
                    },
                    subMatchers=[
-                   ] + self.SMs_copyrightspam() + [
-                   ] + self.SMs_version() + [
+                   ] + self.SMs_header() + [
                    ]
                 ),
             ]
         )
         return result
 
-    def SMs_copyrightspam(self):
+    def SMs_header(self):
         result = [
             SM(name='copyrightspam', repeats=True, coverageIgnore=True,
                startReStr=r"\s*\|\s*(?:" + r"|".join([
@@ -82,12 +81,7 @@ class ParserFplo14(object):
                    r"K\. Koepernik, B\. Velicky, R\. Hayn and H\. Eschrig,",
                    r"Phys\. Rev\. B 55, 5717 \(1997\)",
                ]) + r")\s*\|\s*$",
-            )
-        ]
-        return result
-
-    def SMs_version(self):
-        result = [
+            ),
             SM(name='versMain',
                startReStr=r"\s*\|\s*main\s+version\s*:\s*(?P<x_fplo_t_program_version_main>\S+)\s*\|\s*$",
                subMatchers=[
