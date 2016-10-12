@@ -37,6 +37,7 @@ class ParserFplo14(object):
             r"^\s*\|\s*\|\s*$",
         ]
         self.coverageIgnore = None
+        unit_conversion.register_userdefined_quantity('usrTpibbohr', '1/bohr', 2*math.pi)
 
     def parse(self):
         self.coverageIgnore = re.compile(r"^(?:" + r"|".join(self.coverageIgnoreList) + r")$")
