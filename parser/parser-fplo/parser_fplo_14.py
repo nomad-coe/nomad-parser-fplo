@@ -11,6 +11,7 @@ import nomadcore.unit_conversion.unit_conversion as unit_conversion
 import math
 import numpy as np
 import FploCommon as FploC
+import calendar
 from nomadcore.parser_backend import valueForStrValue
 from FploCommon import RE_f, RE_i, cRE_f, cRE_i
 from nomadcore.parser_backend import valueForStrValue
@@ -99,6 +100,9 @@ class ParserFplo14(object):
                    SM(name='compileOpts', repeats=True,
                       startReStr=r"\s*\|\s*compiled with\s*(?P<x_fplo_program_compilation_options>.*?)\s*\|\s*$",
                    ),
+                   SM(name='runDate',
+                      startReStr=r"\s*\|\s*date\s*:\s*(?P<time_run_date_start__strFploDate>.+?)\s*\|\s*$",
+                   ),
                ],
             ),
         ]
@@ -125,6 +129,25 @@ class ParserFplo14(object):
         self.parser = parser
         # reset values if same superContext is used to parse different files
         self.initialize_values()
+
+    def strValueTransform_strFploDate(self, fplo_date):
+        if fplo_date is None:
+            return None
+        epoch = 0
+        match = re.match(
+            r"(?P<dow>[A-Za-z]+)\s+(?P<month>[A-Za-z]+)\s+(?P<day>\d+)\s+" +
+            r"(?P<hour>\d+):\s*(?P<minute>\d+):\s*(?P<second>\d+)\s+" +
+            r"(?P<year>\d+)\s*",
+            fplo_date)
+        if match:
+            month = FploC.MONTH_NUMBER[match.group('month')]
+            epoch = calendar.timegm(
+                (int(match.group('year')), int(month), int(match.group('day')),
+                 int(match.group('hour')), int(match.group('minute')), int(match.group('second'))))
+        else:
+            raise RuntimeError("unparsable date: %s", fplo_date)
+        return(epoch)
+    strValueTransform_strFploDate.units = 's'
 
 if __name__ == "__main__":
     parser = ParserFplo14()
