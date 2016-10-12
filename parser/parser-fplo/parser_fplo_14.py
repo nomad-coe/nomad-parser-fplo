@@ -96,6 +96,9 @@ class ParserFplo14(object):
                    SM(name='versRelease',
                       startReStr=r"\s*\|\s*release\s*:\s*(?P<x_fplo_t_program_version_release>\S+)\s*\|\s*$",
                    ),
+                   SM(name='compileOpts', repeats=True,
+                      startReStr=r"\s*\|\s*compiled with\s*(?P<x_fplo_program_compilation_options>.*?)\s*\|\s*$",
+                   ),
                ],
             ),
         ]
