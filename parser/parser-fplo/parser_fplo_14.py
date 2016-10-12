@@ -29,7 +29,6 @@ class ParserFplo14(object):
             # set all temporaries to caching-only
             if name.startswith('x_fplo_t_'):
                 self.cachingLevelForMetaName[name] = CachingLevel.Cache
-        # common prosa in espresso output
         self.coverageIgnoreList = [
             # ignore empty lines
             r"\s*",
