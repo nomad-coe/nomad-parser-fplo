@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import setup_paths
-from nomadcore.simple_parser import mainFunction, SimpleMatcher as SM
+from nomadcore.simple_parser import mainFunction, SimpleMatcher as SM, CachingLevel
 from nomadcore.local_meta_info import loadJsonFile, InfoKindEl
 import os
 import sys
