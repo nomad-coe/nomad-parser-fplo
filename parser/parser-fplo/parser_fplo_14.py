@@ -58,6 +58,7 @@ class ParserFplo14(object):
                    },
                    subMatchers=[
                    ] + self.sm_copyrightspam() + [
+                   ] + self.sm_version() + [
                    ]
                 ),
             ]
@@ -83,6 +84,29 @@ class ParserFplo14(object):
             )
         ]
         return result
+
+    def sm_version(self):
+        result = [
+            SM(name='versMain',
+               startReStr=r"\s*\|\s*main\s+version\s*:\s*(?P<x_fplo_t_program_version_main>\S+)\s*\|\s*$",
+               subMatchers=[
+                   SM(name='versSub',
+                      startReStr=r"\s*\|\s*sub\s+version\s*:\s*(?P<x_fplo_program_version_sub>\S+)\s*\|\s*$",
+                   ),
+                   SM(name='versRelease',
+                      startReStr=r"\s*\|\s*release\s*:\s*(?P<x_fplo_t_program_version_release>\S+)\s*\|\s*$",
+                   ),
+               ],
+            ),
+        ]
+        return result
+
+    def onClose_section_run(
+            self, backend, gIndex, section):
+        # assemble version number
+        backend.addValue('program_version',
+                         section['x_fplo_t_program_version_main'][-1] + '-' +
+                         section['x_fplo_t_program_version_release'][-1])
 
     def initialize_values(self):
         """allows to reset values if the same superContext is used to parse
