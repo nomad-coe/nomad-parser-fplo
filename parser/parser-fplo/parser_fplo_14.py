@@ -57,15 +57,15 @@ class ParserFplo14(object):
                        'program_basis_set_type': 'local-orbital minimum-basis',
                    },
                    subMatchers=[
-                   ] + self.sm_copyrightspam() + [
-                   ] + self.sm_version() + [
+                   ] + self.SMs_copyrightspam() + [
+                   ] + self.SMs_version() + [
                    ]
                 ),
             ]
         )
         return result
 
-    def sm_copyrightspam(self):
+    def SMs_copyrightspam(self):
         result = [
             SM(name='copyrightspam', repeats=True, coverageIgnore=True,
                startReStr=r"\s*\|\s*(?:" + r"|".join([
@@ -85,7 +85,7 @@ class ParserFplo14(object):
         ]
         return result
 
-    def sm_version(self):
+    def SMs_version(self):
         result = [
             SM(name='versMain',
                startReStr=r"\s*\|\s*main\s+version\s*:\s*(?P<x_fplo_t_program_version_main>\S+)\s*\|\s*$",
