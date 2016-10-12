@@ -111,6 +111,7 @@ class ParserFplo14(object):
         backend.addValue('program_version',
                          section['x_fplo_t_program_version_main'][-1] + '-' +
                          section['x_fplo_t_program_version_release'][-1])
+        # map list of hosts to dict
         backend.addValue('run_hosts',
                          {h:1 for h in section['x_fplo_t_run_hosts']})
 
