@@ -60,6 +60,7 @@ class ParserFplo14(object):
                    subMatchers=[
                    ] + self.SMs_header() + [
                    ] + self.SMs_input() + [
+                   ] + self.SMs_crystal_structure() + [
                    ]
                 ),
             ]
@@ -150,6 +151,52 @@ class ParserFplo14(object):
         ]
         return result
 
+    def SMs_crystal_structure(self):
+        result = [
+            SM(name='csHead',
+               startReStr=r"\s*CALCULATION OF CRYSTALL STRUCTURE\s*$",
+               subMatchers=[
+                   SM(name='csInputHead',
+                      startReStr=r"\s*INPUT DATA\s*$",
+                   ),
+                   SM(name='csSymmHead',
+                      startReStr=r"\s*SYMMETRY CREATION\s*$",
+                      subMatchers=[
+                          SM(name='csLatticeVectors',
+                             startReStr=r"\s*lattice vectors\s*$",
+                             subMatchers=[
+                                 SM(name='csLatA1',
+                                    startReStr=r"\s*a1\s*:\s+" + FploC.re_vec('x_fplo_t_vec_a', 'bohr') + r"\s*$",
+                                 ),
+                                 SM(name='csLatA2',
+                                    startReStr=r"\s*a2\s*:\s+" + FploC.re_vec('x_fplo_t_vec_a', 'bohr') + r"\s*$",
+                                 ),
+                                 SM(name='csLatA3',
+                                    startReStr=r"\s*a3\s*:\s+" + FploC.re_vec('x_fplo_t_vec_a', 'bohr') + r"\s*$",
+                                 ),
+                             ],
+                          ),
+                          SM(name='csReciprocalVectors',
+                             startReStr=r"\s*reciprocial lattice vectors / 2\*Pi\s*$",
+                             subMatchers=[
+                                 SM(name='csLatB1',
+                                    startReStr=r"\s*g1\s*:\s+" + FploC.re_vec('x_fplo_t_vec_b', 'usrTpibbohr') + r"\s*$",
+                                 ),
+                                 SM(name='csLatB2',
+                                    startReStr=r"\s*g2\s*:\s+" + FploC.re_vec('x_fplo_t_vec_b', 'usrTpibbohr') + r"\s*$",
+                                 ),
+                                 SM(name='csLatB3',
+                                    startReStr=r"\s*g3\s*:\s+" + FploC.re_vec('x_fplo_t_vec_b', 'usrTpibbohr') + r"\s*$",
+                                 ),
+                             ],
+                          ),
+                      ],
+                   ),
+               ],
+            ),
+        ]
+        return result
+
     def onClose_section_run(
             self, backend, gIndex, section):
         # assemble version number
@@ -159,6 +206,52 @@ class ParserFplo14(object):
         # map list of hosts to dict
         backend.addValue('run_hosts',
                          {h:1 for h in section['x_fplo_t_run_hosts']})
+
+    def onClose_section_system(
+            self, backend, gIndex, section):
+        # store direct lattice matrix and inverse for transformation crystal <-> cartesian
+        if section['x_fplo_t_vec_a_x'] is not None:
+            self.amat = np.array([
+                section['x_fplo_t_vec_a_x'][-3:], section['x_fplo_t_vec_a_y'][-3:], section['x_fplo_t_vec_a_z'][-3:],
+            ], dtype=np.float64).T
+            # store inverse for transformation cartesian -> crystal
+            try:
+                self.amat_inv = np.linalg.inv(self.amat)
+            except np.linalg.linalg.LinAlgError:
+                raise Exception("error inverting bravais matrix " + str(self.amat))
+            LOGGER.info('NewCell')
+        else:
+            raise Exception("missing bravais vectors")
+        backend.addArrayValues('simulation_cell', self.amat)
+        # store reciprocal lattice matrix and inverse for transformation crystal <-> cartesian
+        if section['x_fplo_t_vec_b_x'] is not None:
+            self.bmat = np.array([
+                section['x_fplo_t_vec_b_x'], section['x_fplo_t_vec_b_y'], section['x_fplo_t_vec_b_z'],
+            ], dtype=np.float64).T
+            # store inverse for transformation cartesian -> crystal
+            try:
+                self.bmat_inv = np.linalg.inv(self.bmat)
+            except np.linalg.linalg.LinAlgError:
+                raise Exception("error inverting reciprocal cell matrix")
+        elif section['x_fplo_t_vec_a_x'] is not None:
+            # we got new lattice vectors, but no reciprocal ones, calculate
+            # on-the-fly
+            LOGGER.error('calculating bmat on the fly from amat')
+            abmat = np.zeros((3,3), dtype=np.float64)
+            abmat[0] = np.cross(self.amat[1],self.amat[2])
+            abmat[1] = np.cross(self.amat[2],self.amat[0])
+            abmat[2] = np.cross(self.amat[0],self.amat[1])
+            abmat *= 2*math.pi / np.dot(abmat[0],self.amat[0])
+            self.bmat = abmat
+            # store inverse for transformation cartesian -> crystal
+            try:
+                self.bmat_inv = np.linalg.inv(self.bmat)
+            except np.linalg.linalg.LinAlgError:
+                raise Exception("error inverting reciprocal cell matrix")
+        else:
+            raise Exception("missing reciprocal cell vectors")
+        backend.addArrayValues('x_fplo_reciprocal_cell', self.bmat)
+
 
     def initialize_values(self):
         """allows to reset values if the same superContext is used to parse
