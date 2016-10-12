@@ -103,6 +103,9 @@ class ParserFplo14(object):
                    SM(name='runDate',
                       startReStr=r"\s*\|\s*date\s*:\s*(?P<time_run_date_start__strFploDate>.+?)\s*\|\s*$",
                    ),
+                   SM(name='runHost',
+                      startReStr=r"\s*\|\s*host\s*:\s*(?P<x_fplo_t_run_hosts>.+?)\s*\|\s*$"
+                   ),
                ],
             ),
         ]
@@ -114,6 +117,8 @@ class ParserFplo14(object):
         backend.addValue('program_version',
                          section['x_fplo_t_program_version_main'][-1] + '-' +
                          section['x_fplo_t_program_version_release'][-1])
+        backend.addValue('run_hosts',
+                         {h:1 for h in section['x_fplo_t_run_hosts']})
 
     def initialize_values(self):
         """allows to reset values if the same superContext is used to parse
