@@ -59,6 +59,7 @@ class ParserFplo14(object):
                    },
                    subMatchers=[
                    ] + self.SMs_header() + [
+                   ] + self.SMs_input() + [
                    ]
                 ),
             ]
@@ -100,6 +101,34 @@ class ParserFplo14(object):
                    SM(name='runHost',
                       startReStr=r"\s*\|\s*host\s*:\s*(?P<x_fplo_t_run_hosts>.+?)\s*\|\s*$"
                    ),
+               ],
+            ),
+        ]
+        return result
+
+    def SMs_sym_msg(self):
+        # msg appears twice, so new generator
+        result = [
+            SM(name='inpSymInfo',
+               startReStr=r"\s*INFORMATION in MODULE SYMMETRY\(crystal_structure_setup\):\s*$",
+               subMatchers=[
+                   SM(name='InfoHexAxis1',
+                      startReStr=r"\s*INFORMATION: (?P<message_info_run>\(makeunitcell\): Third hexagonal axis angle != 120 degree!)\s*$",
+                   ),
+                   SM(name='InfoHexAxis2',
+                      startReStr=r"\s*(?P<message_info_run>I will correct it !)\s*$",
+                   ),
+               ],
+            ),
+        ]
+        return result
+
+    def SMs_input(self):
+        result = [
+            SM(name='inpSym',
+               startReStr=r"\s*File =\.sym exists!\s*$",
+               subMatchers=[
+               ] + self.SMs_sym_msg() + [
                ],
             ),
         ]
