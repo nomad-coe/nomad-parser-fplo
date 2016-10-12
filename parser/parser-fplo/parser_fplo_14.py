@@ -142,7 +142,7 @@ class ParserFplo14(object):
                       startReStr=r"\s*Compound\s*:\s*(?P<system_name>.*?)\s*$",
                    ),
                    SM(name='startEchoInput',
-                      startReStr=r"\s*Start: content of =.in\s*",
+                      startReStr=r"\s*Start: content of =.in\s*$",
                       adHoc=self.adHoc_input_content
                    ),
                ] + self.SMs_sym_msg() + [
