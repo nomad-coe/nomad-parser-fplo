@@ -51,6 +51,11 @@ class ParserFplo14(object):
             subMatchers=[
                 SM(name='newrun', repeats=True,
                    startReStr=r"\s*\|\s*FULL-POTENTIAL LOCAL-ORBITAL MINIMUM BASIS BANDSTRUCTURE CODE\s*\|\s*$",
+                   sections=['section_run', 'section_method', 'section_system'],
+                   fixedStartValues={
+                       'program_name': 'fplo',
+                       'program_basis_set_type': 'local-orbital minimum-basis',
+                   },
                    subMatchers=[
                    ] + self.sm_copyrightspam() + [
                    ]
