@@ -123,11 +123,27 @@ class ParserFplo14(object):
         ]
         return result
 
+    def adHoc_input_content(self, parser):
+        LOGGER.error("TODO: parse C-like echoed input")
+
     def SMs_input(self):
         result = [
             SM(name='inpSym',
                startReStr=r"\s*File =\.sym exists!\s*$",
                subMatchers=[
+               ] + self.SMs_sym_msg() + [
+               ],
+            ),
+            SM(name='inpIn',
+               startReStr=r"\s*File =\.in exists!\s*$",
+               subMatchers=[
+                   SM(name='inpInCompound',
+                      startReStr=r"\s*Compound\s*:\s*(?P<system_name>.*?)\s*$",
+                   ),
+                   SM(name='startEchoInput',
+                      startReStr=r"\s*Start: content of =.in\s*",
+                      adHoc=self.adHoc_input_content
+                   ),
                ] + self.SMs_sym_msg() + [
                ],
             ),
