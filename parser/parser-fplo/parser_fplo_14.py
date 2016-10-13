@@ -192,6 +192,26 @@ class ParserFplo14(object):
                           ),
                       ],
                    ),
+                   SM(name='csAtomsHead',
+                      startReStr=r"\s*UNIT CELL CREATION\s*$",
+                      subMatchers=[
+                          SM(name='csAtomsPositionHead',
+                             startReStr=r"\s*No.  Element WPS CPA-Block\s+X\s+Y\s+Z\s*$",
+                             subMatchers=[
+                                 SM(name='csAtomPositions', repeats=True,
+                                    startReStr=(
+                                        r"\s*(?P<x_fplo_t_atom_idx>" + RE_i + r")" +
+                                        r"\s+(?P<x_fplo_t_atom_labels>\S+)" +
+                                        r"\s+(?P<x_fplo_t_atom_wyckoff_idx>" + RE_i + r")" +
+                                        r"\s+(?P<x_fplo_t_atom_cpa_block>" + RE_i + r")" +
+                                        r"\s+" + FploC.re_vec('x_fplo_t_atom_positions', 'bohr') +
+                                        r"\s*$"
+                                    ),
+                                 ),
+                             ],
+                          ),
+                      ],
+                   ),
                ],
             ),
         ]
@@ -251,7 +271,25 @@ class ParserFplo14(object):
         else:
             raise Exception("missing reciprocal cell vectors")
         backend.addArrayValues('x_fplo_reciprocal_cell', self.bmat)
-
+        # stuff we parsed from atom position table
+        if section['x_fplo_t_atom_labels'] is not None:
+            backend.addArrayValues('atom_labels', np.asarray(
+                section['x_fplo_t_atom_labels']))
+        if section['x_fplo_t_atom_idx'] is not None:
+            backend.addArrayValues('x_fplo_atom_idx', np.asarray(
+                section['x_fplo_t_atom_idx']))
+        if section['x_fplo_t_atom_wyckoff_idx'] is not None:
+            backend.addArrayValues('x_fplo_atom_wyckoff_idx', np.asarray(
+                section['x_fplo_t_atom_wyckoff_idx']))
+        if section['x_fplo_t_atom_cpa_block'] is not None:
+            backend.addArrayValues('x_fplo_atom_cpa_block', np.asarray(
+                section['x_fplo_t_atom_cpa_block']))
+        if section['x_fplo_t_atom_positions_x'] is not None:
+            backend.addArrayValues('atom_positions', np.asarray([
+                section['x_fplo_t_atom_positions_x'],
+                section['x_fplo_t_atom_positions_y'],
+                section['x_fplo_t_atom_positions_z'],
+            ], dtype=np.float64).T)
 
     def initialize_values(self):
         """allows to reset values if the same superContext is used to parse
