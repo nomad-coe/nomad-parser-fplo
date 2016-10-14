@@ -290,6 +290,19 @@ class ParserFplo14(object):
                    SM(name='mLSDApU_functional',
                       startReStr=r"\s*LSDA\+U:\s*Functional\s*:\s*(?P<x_fplo_lsdapu_functional>.+?)\s*$",
                    ),
+                   SM(name='mLSDApU_n_correlated_states',
+                      startReStr=r"\s*LSDA\+U:\s*\d+\s*Correlated states",
+                      subMatchers=[
+                          SM(name='mLSDApU_correlated_states_header',
+                             startReStr=r'\s*LSDA\+U:\s*sort\s+el.\s+state\s+F0\s+F2\s+F4\s+F6\s+U\s+J\s*$',
+                             subMatchers=[
+                                 SM(name='mLSDApU_correlated_states_in_EV',
+                                    startReStr=r'\s*LSDA\+U:\s*\(in eV\)\s*$',
+                                 ),
+                             ],
+                          ),
+                      ],
+                   ),
                ],
             ),
         ]
