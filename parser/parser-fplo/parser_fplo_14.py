@@ -151,6 +151,17 @@ class ParserFplo14(object):
         ]
         return result
 
+    def adHoc_cs_structure_type(self, parser):
+        if parser.lastMatch['x_fplo_structure_type'] == 'Crystal':
+            parser.backend.addArrayValues('configuration_periodic_dimensions',
+                                          np.array([True, True, True]))
+        elif parser.lastMatch['x_fplo_structure_type'] == 'Molecule':
+            parser.backend.addArrayValues('configuration_periodic_dimensions',
+                                          np.array([False, False, False]))
+        else:
+            raise RuntimeError('unexpected value for x_fplo_structure_type: ',
+                               parser.lastMatch['x_fplo_structure_type'])
+
     def SMs_crystal_structure(self):
         result = [
             SM(name='csHead',
@@ -211,6 +222,10 @@ class ParserFplo14(object):
                              ],
                           ),
                       ],
+                   ),
+                   SM(name='csStructureType',
+                      startReStr=r"Structure type:\s*(?P<x_fplo_structure_type>\S+)\s*$",
+                      adHoc=self.adHoc_cs_structure_type
                    ),
                ],
             ),
