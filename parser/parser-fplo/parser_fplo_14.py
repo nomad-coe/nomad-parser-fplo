@@ -279,8 +279,26 @@ class ParserFplo14(object):
                    p.backend, 'section_XC_functionals',
                    FPLO_XC_FUNCTIONAL[p.lastMatch['x_fplo_xc_functional']])
             ),
+            SM(name='mLSDApU_stuff',
+               startReStr=r"\s*LSDA\+U:\s*-+\s*$",
+               subMatchers=[
+                   SM(name='mLSDApU_projection',
+                      startReStr=r"\s*LSDA\+U:\s*Projection\s*:\s*(?P<x_fplo_lsdapu_projection>\S+?)\s*$",
+                   ),
+                   SM(name='mLSDApU_functional',
+                      startReStr=r"\s*LSDA\+U:\s*Functional\s*:\s*(?P<x_fplo_lsdapu_functional>.+?)\s*$",
+                   ),
+               ],
+            ),
         ]
         return result
+
+    def onClose_section_method(self, backend, gIndex, section):
+        # check for DFT+U vs. DFT
+        if section['x_fplo_lsdapu_projection'] is None:
+            backend.addValue('electronic_structure_method', 'DFT')
+        else:
+            backend.addValue('electronic_structure_method', 'DFT+U')
 
     def onClose_section_run(
             self, backend, gIndex, section):
