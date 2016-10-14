@@ -28,6 +28,30 @@ FPLO_RELATIVISTIC = {
     'full': '4_component_relativistic',
 }
 
+# lookup table translating XC functional from fplo to NOMAD
+FPLO_XC_FUNCTIONAL = {
+    'Exchange only                (LSDA)': [
+        { 'XC_functional_name': 'LDA_X' },
+    ],
+    'von Barth Hedin              (LSDA)': [
+        { 'XC_functional_name': 'LDA_X' },
+        { 'XC_functional_name': 'LDA_C_VBH' },
+    ],
+    'Perdew and Zunger            (LSDA)': [
+        { 'XC_functional_name': 'LDA_X' },
+        { 'XC_functional_name': 'LDA_C_PZ' },
+    ],
+    'Perdew Wang 92               (LSDA)': [
+        { 'XC_functional_name': 'LDA_X' },
+        { 'XC_functional_name': 'LDA_C_PW' },
+    ],
+    'Perdew Burke Ernzerhof 96    (GGA)':  [
+        { 'XC_functional_name': 'LDA_X' },
+        { 'XC_functional_name': 'LDA_C_PW' },
+        { 'XC_functional_name': 'GGA_X_PBE' },
+        { 'XC_functional_name': 'GGA_C_PBE' },
+    ],
+}
 
 class ParserFplo14(object):
     """main place to keep the parser status, open ancillary files,..."""
@@ -249,6 +273,12 @@ class ParserFplo14(object):
                adHoc=lambda p: p.backend.addValue(
                    'relativity_method', FPLO_RELATIVISTIC[p.lastMatch['x_fplo_t_relativity_method']])
             ),
+            SM(name='mXC',
+               startReStr=r"\s*XC version :\s*(?P<x_fplo_xc_functional_number>\d+)\s*-\s*(?P<x_fplo_xc_functional>.*?)\s*$",
+               adHoc=lambda p: self.addSectionDictList(
+                   p.backend, 'section_XC_functionals',
+                   FPLO_XC_FUNCTIONAL[p.lastMatch['x_fplo_xc_functional']])
+            ),
         ]
         return result
 
@@ -359,6 +389,19 @@ class ParserFplo14(object):
             raise RuntimeError("unparsable date: %s", fplo_date)
         return(epoch)
     strValueTransform_strFploDate.units = 's'
+
+    def addSectionDictList(self, backend, section_name, section_dict_list):
+        for section_dict in section_dict_list:
+            self.addSectionDict(backend, section_name, section_dict)
+
+    def addSectionDict(self, backend, section_name, section_dict):
+        gIndex = backend.openSection(section_name)
+        for key, value in sorted(section_dict.items()):
+            if isinstance(value, (list,dict)):
+                backend.addValue(key, value)
+            else:
+                backend.addValue(key, value)
+        backend.closeSection(section_name, gIndex)
 
 if __name__ == "__main__":
     parser = ParserFplo14()
