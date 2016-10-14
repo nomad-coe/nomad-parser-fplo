@@ -20,6 +20,15 @@ from nomadcore.parser_backend import valueForStrValue
 LOGGER = logging.getLogger(__name__)
 
 
+# lookup table translating relativistic treatment from fplo to NOMAD
+FPLO_RELATIVISTIC = {
+    'non': '',
+    'scalar': 'scalar_relativistic',
+    'KH scalar': 'scalar_relativistic',
+    'full': '4_component_relativistic',
+}
+
+
 class ParserFplo14(object):
     """main place to keep the parser status, open ancillary files,..."""
     def __init__(self):
@@ -61,6 +70,7 @@ class ParserFplo14(object):
                    ] + self.SMs_header() + [
                    ] + self.SMs_input() + [
                    ] + self.SMs_crystal_structure() + [
+                   ] + self.SMs_method() + [
                    ]
                 ),
             ]
@@ -228,6 +238,16 @@ class ParserFplo14(object):
                       adHoc=self.adHoc_cs_structure_type
                    ),
                ],
+            ),
+        ]
+        return result
+
+    def SMs_method(self):
+        result = [
+            SM(name='mRelativistic',
+               startReStr=r"\s*(?P<x_fplo_t_relativity_method>.*?)\s*relativistic\s*calculation!\s*$",
+               adHoc=lambda p: p.backend.addValue(
+                   'relativity_method', FPLO_RELATIVISTIC[p.lastMatch['x_fplo_t_relativity_method']])
             ),
         ]
         return result
