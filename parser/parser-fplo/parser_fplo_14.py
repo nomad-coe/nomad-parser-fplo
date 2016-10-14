@@ -68,6 +68,8 @@ class ParserFplo14(object):
             # table separators
             r"^\s*[=%-]+\s*$",
             r"^\s*\|\s*\|\s*$",
+            # table separators in LSDA+U
+            r"^\s*LSDA\+U:\s*[=%-]+\s*$",
         ]
         self.coverageIgnore = None
         unit_conversion.register_userdefined_quantity('usrTpibbohr', '1/bohr', 2*math.pi)
