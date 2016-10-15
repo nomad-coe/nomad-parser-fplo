@@ -285,10 +285,10 @@ class ParserFplo14(object):
                startReStr=r"\s*LSDA\+U:\s*-+\s*$",
                subMatchers=[
                    SM(name='mLSDApU_projection',
-                      startReStr=r"\s*LSDA\+U:\s*Projection\s*:\s*(?P<x_fplo_lsdapu_projection>\S+?)\s*$",
+                      startReStr=r"\s*LSDA\+U:\s*Projection\s*:\s*(?P<x_fplo_dftPu_projection>\S+?)\s*$",
                    ),
                    SM(name='mLSDApU_functional',
-                      startReStr=r"\s*LSDA\+U:\s*Functional\s*:\s*(?P<x_fplo_lsdapu_functional>.+?)\s*$",
+                      startReStr=r"\s*LSDA\+U:\s*Functional\s*:\s*(?P<x_fplo_dftPu_functional>.+?)\s*$",
                    ),
                    SM(name='mLSDApU_n_correlated_states',
                       startReStr=r"\s*LSDA\+U:\s*\d+\s*Correlated states",
@@ -302,15 +302,15 @@ class ParserFplo14(object):
                                  SM(name='mLSDApU_correlated_states_line', repeats=True,
                                     startReStr=(
                                         r"\s*LSDA\+U:" +
-                                        r"\s*(?P<x_fplo_t_dftpu_species_state_species>\d+)" +
-                                        r"\s+(?P<x_fplo_t_dftpu_species_state_element>\S+)" +
-                                        r"\s+(?P<x_fplo_t_dftpu_species_state_state>\S+)" +
-                                        r"\s+(?P<x_fplo_t_dftpu_species_state_F0__eV>" + RE_f + r")" +
-                                        r"\s+(?P<x_fplo_t_dftpu_species_state_F2__eV>" + RE_f + r")" +
-                                        r"\s+(?P<x_fplo_t_dftpu_species_state_F4__eV>" + RE_f + r")" +
-                                        r"\s+(?P<x_fplo_t_dftpu_species_state_F6__eV>" + RE_f + r")" +
-                                        r"\s+(?P<x_fplo_t_dftpu_species_state_U__eV>" + RE_f + r")" +
-                                        r"\s+(?P<x_fplo_t_dftpu_species_state_J__eV>" + RE_f + r")" +
+                                        r"\s*(?P<x_fplo_t_dftPu_species_state_species>\d+)" +
+                                        r"\s+(?P<x_fplo_t_dftPu_species_state_element>\S+)" +
+                                        r"\s+(?P<x_fplo_t_dftPu_species_state_state>\S+)" +
+                                        r"\s+(?P<x_fplo_t_dftPu_species_state_F0__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dftPu_species_state_F2__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dftPu_species_state_F4__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dftPu_species_state_F6__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dftPu_species_state_U__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dftPu_species_state_J__eV>" + RE_f + r")" +
                                         r"\s*$"
                                     )
                                  ),
@@ -322,12 +322,12 @@ class ParserFplo14(object):
                                  SM(name='mLSDApU_correlated_sites_line', repeats=True,
                                     startReStr=(
                                         r"\s*LSDA\+U:" +
-                                        r"\s*(?P<x_fplo_t_dftpu_site_index>\d+)" +
-                                        r"\s+(?P<x_fplo_t_dftpu_site_element>\S+)" +
-                                        r"\s*(?P<x_fplo_t_dftpu_site_species>\d+)" +
-                                        r"\s+(?P<x_fplo_t_dftpu_site_state>\S+)" +
-                                        r"\s+(?P<x_fplo_t_dftpu_site_ubi1>\d+)" +
-                                        r"\s+(?P<x_fplo_t_dftpu_site_ubi2>\d+)" +
+                                        r"\s*(?P<x_fplo_t_dftPu_site_index>\d+)" +
+                                        r"\s+(?P<x_fplo_t_dftPu_site_element>\S+)" +
+                                        r"\s*(?P<x_fplo_t_dftPu_site_species>\d+)" +
+                                        r"\s+(?P<x_fplo_t_dftPu_site_state>\S+)" +
+                                        r"\s+(?P<x_fplo_t_dftPu_site_ubi1>\d+)" +
+                                        r"\s+(?P<x_fplo_t_dftPu_site_ubi2>\d+)" +
                                         r"\s*$"
                                     )
                                  ),
