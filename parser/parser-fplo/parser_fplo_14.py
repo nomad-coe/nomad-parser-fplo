@@ -302,15 +302,15 @@ class ParserFplo14(object):
                                  SM(name='mLSDApU_correlated_states_line', repeats=True,
                                     startReStr=(
                                         r"\s*LSDA\+U:" +
-                                        r"\s*(?P<x_fplo_t_dftPu_species_state_species>\d+)" +
-                                        r"\s+(?P<x_fplo_t_dftPu_species_state_element>\S+)" +
-                                        r"\s+(?P<x_fplo_t_dftPu_species_state_state>\S+)" +
-                                        r"\s+(?P<x_fplo_t_dftPu_species_state_F0__eV>" + RE_f + r")" +
-                                        r"\s+(?P<x_fplo_t_dftPu_species_state_F2__eV>" + RE_f + r")" +
-                                        r"\s+(?P<x_fplo_t_dftPu_species_state_F4__eV>" + RE_f + r")" +
-                                        r"\s+(?P<x_fplo_t_dftPu_species_state_F6__eV>" + RE_f + r")" +
-                                        r"\s+(?P<x_fplo_t_dftPu_species_state_U__eV>" + RE_f + r")" +
-                                        r"\s+(?P<x_fplo_t_dftPu_species_state_J__eV>" + RE_f + r")" +
+                                        r"\s*(?P<x_fplo_t_dftPu_species_subshell_species>\d+)" +
+                                        r"\s+(?P<x_fplo_t_dftPu_species_subshell_element>\S+)" +
+                                        r"\s+(?P<x_fplo_t_dftPu_species_subshell_subshell>\S+)" +
+                                        r"\s+(?P<x_fplo_t_dftPu_species_subshell_F0__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dftPu_species_subshell_F2__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dftPu_species_subshell_F4__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dftPu_species_subshell_F6__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dftPu_species_subshell_U__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dftPu_species_subshell_J__eV>" + RE_f + r")" +
                                         r"\s*$"
                                     )
                                  ),
@@ -325,7 +325,7 @@ class ParserFplo14(object):
                                         r"\s*(?P<x_fplo_t_dftPu_site_index>\d+)" +
                                         r"\s+(?P<x_fplo_t_dftPu_site_element>\S+)" +
                                         r"\s*(?P<x_fplo_t_dftPu_site_species>\d+)" +
-                                        r"\s+(?P<x_fplo_t_dftPu_site_state>\S+)" +
+                                        r"\s+(?P<x_fplo_t_dftPu_site_subshell>\S+)" +
                                         r"\s+(?P<x_fplo_t_dftPu_site_ubi1>\d+)" +
                                         r"\s+(?P<x_fplo_t_dftPu_site_ubi2>\d+)" +
                                         r"\s*$"
