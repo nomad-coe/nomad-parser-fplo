@@ -105,6 +105,11 @@ class ParserFplo14(object):
                           ] + self.SMs_method() + [
                           ],
                        ),
+                       SM(name='start_scf',
+                          startReStr=r"\s*SCF: Iteration version\s*\(\s*\d+\) : Iterat\s*:\s*(?:.*?)\s*$",
+                          sections=['section_single_configuration_calculation'],
+                          subMatchers=self.SMs_scf(),
+                       ),
                    ]
                 ),
             ]
@@ -348,6 +353,11 @@ class ParserFplo14(object):
         ]
         return result
 
+    def SMs_scf(self):
+        result = [
+        ]
+        return result
+
     def get_dftPu_per_species_orbital(self, section_method):
         dftPu_per_species_orbital = {}
         for species_orbital_idx in range(len(section_method['x_fplo_t_dftPu_species_subshell_species'])):
@@ -396,6 +406,7 @@ class ParserFplo14(object):
             backend.addValue('electronic_structure_method', 'DFT+U')
             self.addSectionDictList(backend, 'x_fplo_section_dftPu_orbital',
                                     self.get_dftPu_orbitals(section))
+        self.sectionIdx['method'] = gIndex
 
     def onClose_section_run(
             self, backend, gIndex, section):
@@ -470,6 +481,12 @@ class ParserFplo14(object):
                 section['x_fplo_t_atom_positions_y'],
                 section['x_fplo_t_atom_positions_z'],
             ], dtype=np.float64).T)
+        self.sectionIdx['system'] = gIndex
+
+    def onClose_section_single_configuration_calculation(
+            self, backend, gIndex, section):
+        backend.addValue('single_configuration_calculation_to_system_ref', self.sectionIdx['system'])
+        backend.addValue('single_configuration_to_calculation_method_ref', self.sectionIdx['method'])
 
     def initialize_values(self):
         """allows to reset values if the same superContext is used to parse
