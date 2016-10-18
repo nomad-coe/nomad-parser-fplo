@@ -85,18 +85,26 @@ class ParserFplo14(object):
         result = SM(name='root',
             startReStr=r"$",
             subMatchers=[
-                SM(name='newrun', repeats=True,
+                SM(name='newrun', repeats=True, forwardMatch=True,
                    startReStr=r"\s*\|\s*FULL-POTENTIAL LOCAL-ORBITAL MINIMUM BASIS BANDSTRUCTURE CODE\s*\|\s*$",
-                   sections=['section_run', 'section_method', 'section_system'],
+                   sections=['section_run'],
                    fixedStartValues={
                        'program_name': 'fplo',
                        'program_basis_set_type': 'local-orbital minimum-basis',
                    },
                    subMatchers=[
-                   ] + self.SMs_header() + [
-                   ] + self.SMs_input() + [
-                   ] + self.SMs_crystal_structure() + [
-                   ] + self.SMs_method() + [
+                       SM(name='method_structure',
+                          # parent has forwardMatch set, allows to
+                          # replicate for opening method/system sections, both closed by SCF matcher
+                          startReStr=r"\s*\|\s*FULL-POTENTIAL LOCAL-ORBITAL MINIMUM BASIS BANDSTRUCTURE CODE\s*\|\s*$",
+                          sections=['section_method', 'section_system'],
+                          subMatchers=[
+                          ] + self.SMs_header() + [
+                          ] + self.SMs_input() + [
+                          ] + self.SMs_crystal_structure() + [
+                          ] + self.SMs_method() + [
+                          ],
+                       ),
                    ]
                 ),
             ]
