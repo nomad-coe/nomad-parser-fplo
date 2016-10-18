@@ -492,7 +492,6 @@ class ParserFplo14(object):
         """allows to reset values if the same superContext is used to parse
         different files"""
         self.sectionIdx = {}
-        self.openSectionIdx = {}
         self.tmp = {}
         self.alat = None
         self.section = {}
