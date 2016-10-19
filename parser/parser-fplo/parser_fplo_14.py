@@ -396,6 +396,11 @@ class ParserFplo14(object):
         ]
         return result
 
+    def onOpen_section_scf_iteration(
+            self, backend, gIndex, section):
+        self.section['scf_iteration'] = section
+        self.sectionIdx['scf_iteration'] = gIndex
+
     def onClose_section_scf_iteration(
             self, backend, gIndex, section):
         self.tmp['energy_reference_fermi'] = np.array([
@@ -445,6 +450,11 @@ class ParserFplo14(object):
             dftPu_orbitals.append(dftPu_orbital)
         return dftPu_orbitals
 
+    def onOpen_section_method(
+            self, backend, gIndex, section):
+        self.sectionIdx['method'] = gIndex
+        self.section['method'] = section
+
     def onClose_section_method(
             self, backend, gIndex, section):
         # check for DFT+U vs. DFT
@@ -454,7 +464,11 @@ class ParserFplo14(object):
             backend.addValue('electronic_structure_method', 'DFT+U')
             self.addSectionDictList(backend, 'x_fplo_section_dftPu_orbital',
                                     self.get_dftPu_orbitals(section))
-        self.sectionIdx['method'] = gIndex
+
+    def onOpen_section_run(
+            self, backend, gIndex, section):
+        self.section['run'] = section
+        self.sectionIdx['run'] = gIndex
 
     def onClose_section_run(
             self, backend, gIndex, section):
@@ -465,6 +479,11 @@ class ParserFplo14(object):
         # map list of hosts to dict
         backend.addValue('run_hosts',
                          {h:1 for h in section['x_fplo_t_run_hosts']})
+
+    def onOpen_section_system(
+            self, backend, gIndex, section):
+        self.section['system'] = section
+        self.sectionIdx['system'] = gIndex
 
     def onClose_section_system(
             self, backend, gIndex, section):
@@ -529,7 +548,11 @@ class ParserFplo14(object):
                 section['x_fplo_t_atom_positions_y'],
                 section['x_fplo_t_atom_positions_z'],
             ], dtype=np.float64).T)
-        self.sectionIdx['system'] = gIndex
+
+    def onOpen_section_single_configuration_calculation(
+            self, backend, gIndex, section):
+        self.section['single_configuration_calculation'] = section
+        self.sectionIdx['single_configuration_calculation'] = gIndex
 
     def onClose_section_single_configuration_calculation(
             self, backend, gIndex, section):
