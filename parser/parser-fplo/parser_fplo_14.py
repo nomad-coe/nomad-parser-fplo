@@ -371,6 +371,26 @@ class ParserFplo14(object):
                           ),
                       ],
                    ),
+                   SM(name='header_eTot',
+                      startReStr=r"\s*==========\s*TOTAL ENERGY\s*==========\s*$",
+                      subMatchers=[
+                          SM(name='header2_eTot',
+                             startReStr=r"\s*total energy\s+kinetic energy\s+potential energy\s+ex\.-corr\. energy\s*$",
+                             subMatchers=[
+                                 SM(name='eTot',
+                                    startReStr=(
+                                        r"EE:" +
+                                        r"\s*(?P<energy_total_scf_iteration__eV>" + RE_f + r")" +
+                                        r"\s+(?P<electronic_kinetic_energy_scf_iteration__eV>" + RE_f + r")" +
+                                        r"\s+(?:" + RE_f + r")" +
+                                        r"\s+(?:" + RE_f + r")" +
+                                        r"\s*$"
+                                    )
+                                 ),
+                             ],
+                          ),
+                      ]
+                   ),
                ],
             ),
         ]
