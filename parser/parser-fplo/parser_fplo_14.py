@@ -403,12 +403,11 @@ class ParserFplo14(object):
 
     def onClose_section_scf_iteration(
             self, backend, gIndex, section):
-        self.tmp['energy_reference_fermi'] = np.array([
+        eFermi = np.array([
             section['x_fplo_t_energy_reference_fermi_iteration'][-1],
             section['x_fplo_t_energy_reference_fermi_iteration'][-1],
         ])
-        backend.addArrayValues('energy_reference_fermi_iteration',
-                               self.tmp['energy_reference_fermi'])
+        backend.addArrayValues('energy_reference_fermi_iteration', eFermi)
 
     def get_dftPu_per_species_orbital(self, section_method):
         dftPu_per_species_orbital = {}
@@ -562,10 +561,8 @@ class ParserFplo14(object):
     def initialize_values(self):
         """allows to reset values if the same superContext is used to parse
         different files"""
-        self.sectionIdx = {}
-        self.tmp = {}
-        self.alat = None
         self.section = {}
+        self.sectionIdx = {}
 
     def startedParsing(self, path, parser):
         """called when parsing starts"""
