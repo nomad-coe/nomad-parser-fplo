@@ -445,7 +445,8 @@ class ParserFplo14(object):
             dftPu_orbitals.append(dftPu_orbital)
         return dftPu_orbitals
 
-    def onClose_section_method(self, backend, gIndex, section):
+    def onClose_section_method(
+            self, backend, gIndex, section):
         # check for DFT+U vs. DFT
         if section['x_fplo_dftPu_projection'] is None:
             backend.addValue('electronic_structure_method', 'DFT')
