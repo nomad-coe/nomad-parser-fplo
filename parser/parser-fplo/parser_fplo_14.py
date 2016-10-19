@@ -355,8 +355,35 @@ class ParserFplo14(object):
 
     def SMs_scf(self):
         result = [
+            SM(name='new_iter', repeats=True,
+               startReStr=r"\s*SCF: iteration\s*(?:\d+)\s*dimension\s*(?:\d+)\s*last deviation\s*u=\s*(?:" + RE_f + r")\s*$",
+               sections=['section_scf_iteration'],
+               subMatchers=[
+                   SM(name='estimate_eFermi',
+                      startReStr=r"\s*Estimating Fermi energy\s*\.\.\.\s*$",
+                      subMatchers=[
+                          SM(name='tetwts_eFermi',
+                             startReStr=(
+                                r"\s*TETWTS: Fermi energy:\s*(?P<x_fplo_t_energy_reference_fermi_iteration__hartree>" + RE_f + r")\s*;" +
+                                r"\s*(?:" + RE_f + r")\s*electrons" +
+                                r"\s*$"
+                             ),
+                          ),
+                      ],
+                   ),
+               ],
+            ),
         ]
         return result
+
+    def onClose_section_scf_iteration(
+            self, backend, gIndex, section):
+        self.tmp['energy_reference_fermi'] = np.array([
+            section['x_fplo_t_energy_reference_fermi_iteration'][-1],
+            section['x_fplo_t_energy_reference_fermi_iteration'][-1],
+        ])
+        backend.addArrayValues('energy_reference_fermi_iteration',
+                               self.tmp['energy_reference_fermi'])
 
     def get_dftPu_per_species_orbital(self, section_method):
         dftPu_per_species_orbital = {}
