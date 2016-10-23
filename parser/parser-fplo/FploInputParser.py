@@ -137,7 +137,7 @@ class FploInputParser(object):
         # as well as whitespace-only lines
         m = cRE_trailing_whitespace.match(line, pos_in_line)
         if m is not None:
-            self.annotate(m.group(), ANSI.BG_WHITE)
+            self.annotate(m.group(), ANSI.BG_BLUE)
             return m.end()
         # # nothing matched, call hook
         # return self.onRoot_data(line, pos_in_line)
