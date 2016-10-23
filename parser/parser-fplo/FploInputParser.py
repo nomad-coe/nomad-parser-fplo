@@ -103,13 +103,13 @@ class FploInputParser(object):
         if m is not None:
             self.annotate(m.group(), ANSI.FG_GREEN)
             return m.end()
-        m = cRE_operator.match(line, pos_in_line)
-        if m is not None:
-            self.annotate(m.group(), ANSI.FG_YELLOW)
-            return m.end()
         m = cRE_literal.match(line, pos_in_line)
         if m is not None:
             self.annotate(m.group(), ANSI.BG_YELLOW)
+            return m.end()
+        m = cRE_operator.match(line, pos_in_line)
+        if m is not None:
+            self.annotate(m.group(), ANSI.FG_YELLOW)
             return m.end()
         m = cRE_opening_brace.match(line, pos_in_line)
         if m is not None:
