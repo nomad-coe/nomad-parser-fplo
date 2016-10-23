@@ -94,23 +94,28 @@ class FploInputParser(object):
 
     def state_root(self, line, pos_in_line):
         """state: no open section, i.e. at the root of the namelist"""
+        # match identifier or keyword
         m = cRE_kw_ident.match(line, pos_in_line)
         if m is not None:
             self.annotate(m.group(), ANSI.FG_BRIGHT_GREEN)
             self.statement.append(m.group(1))
             return m.end()
+        # match subscript of previous identifier
         m = cRE_subscript.match(line, pos_in_line)
         if m is not None:
             self.annotate(m.group(), ANSI.FG_GREEN)
             return m.end()
+        # match literals
         m = cRE_literal.match(line, pos_in_line)
         if m is not None:
             self.annotate(m.group(), ANSI.BG_YELLOW)
             return m.end()
+        # match operators
         m = cRE_operator.match(line, pos_in_line)
         if m is not None:
             self.annotate(m.group(), ANSI.FG_YELLOW)
             return m.end()
+        # match block-open
         m = cRE_opening_brace.match(line, pos_in_line)
         if m is not None:
             self.annotate(m.group(), ANSI.FG_BRIGHT_CYAN)
@@ -118,24 +123,26 @@ class FploInputParser(object):
             self.statement.append([])
             self.statement = self.statement[-1]
             return m.end()
+        # match block-close
         m = cRE_closing_brace.match(line, pos_in_line)
         if m is not None:
             self.statement = self.parent_stack.pop()
             self.annotate(m.group(), ANSI.FG_BRIGHT_CYAN)
             return m.end()
+        # match statement-finishing semicolon
         m = cRE_end_statement.match(line, pos_in_line)
         if m is not None:
             self.statement = []
             self.parent_stack[-1].append(self.statement)
             self.annotate(m.group(), ANSI.FG_BRIGHT_YELLOW)
             return m.end()
-        # but comments may appear here
+        # match up-to-eol comments
         m = cRE_comment.match(line, pos_in_line)
         if m is not None:
             self.annotate(m.group(), ANSI.FG_BLUE)
             # self.onComment(m.group('comment'))
             return m.end()
-        # as well as whitespace-only lines
+        # ignore remaining whitespace
         m = cRE_trailing_whitespace.match(line, pos_in_line)
         if m is not None:
             self.annotate(m.group(), ANSI.BG_BLUE)
