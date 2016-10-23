@@ -34,13 +34,14 @@ cRE_literal = re.compile(
         r'(?P<str_d>"[^"\\]*(?:\\\\|\\"|[^"]*)*")',
         r"(?P<str_s>'[^'\\]*(?:\\\\|\\'|[^']*)*')",
         r'(?P<float>' + (
+            r'[+-]?' + # optional sign
             r'\d+(?=[\.eE])' + # positive lookahead: either decimal point or exponential part must follow
             r'(?:\.\d*)?' + #cover decimals if present
             r'(?:[eE][+-]\d+)?' # exponential part if present
         r')'),
         r'(?P<octal_int>0[0-7]+)',
         r'(?P<hex_int>0x[0-9a-fA-F]+)',
-        r'(?P<decimal_int>\d+)',
+        r'(?P<decimal_int>[+-]?\d+)', # integer with optional sign
     ]) + r')'
 )
 
