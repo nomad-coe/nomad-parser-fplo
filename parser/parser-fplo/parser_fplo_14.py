@@ -298,10 +298,10 @@ class ParserFplo14(object):
                startReStr=r"\s*LSDA\+U:\s*-+\s*$",
                subMatchers=[
                    SM(name='mLSDApU_projection',
-                      startReStr=r"\s*LSDA\+U:\s*Projection\s*:\s*(?P<x_fplo_dftPu_projection>\S+?)\s*$",
+                      startReStr=r"\s*LSDA\+U:\s*Projection\s*:\s*(?P<x_fplo_dft_plus_u_projection_type>\S+?)\s*$",
                    ),
                    SM(name='mLSDApU_functional',
-                      startReStr=r"\s*LSDA\+U:\s*Functional\s*:\s*(?P<x_fplo_dftPu_functional>.+?)\s*$",
+                      startReStr=r"\s*LSDA\+U:\s*Functional\s*:\s*(?P<x_fplo_dft_plus_u_functional>.+?)\s*$",
                    ),
                    SM(name='mLSDApU_n_correlated_states',
                       startReStr=r"\s*LSDA\+U:\s*\d+\s*Correlated states",
@@ -315,15 +315,15 @@ class ParserFplo14(object):
                                  SM(name='mLSDApU_correlated_states_line', repeats=True,
                                     startReStr=(
                                         r"\s*LSDA\+U:" +
-                                        r"\s*(?P<x_fplo_t_dftPu_species_subshell_species>\d+)" +
-                                        r"\s+(?P<x_fplo_t_dftPu_species_subshell_element>\S+)" +
-                                        r"\s+(?P<x_fplo_t_dftPu_species_subshell_subshell>\S+)" +
-                                        r"\s+(?P<x_fplo_t_dftPu_species_subshell_F0__eV>" + RE_f + r")" +
-                                        r"\s+(?P<x_fplo_t_dftPu_species_subshell_F2__eV>" + RE_f + r")" +
-                                        r"\s+(?P<x_fplo_t_dftPu_species_subshell_F4__eV>" + RE_f + r")" +
-                                        r"\s+(?P<x_fplo_t_dftPu_species_subshell_F6__eV>" + RE_f + r")" +
-                                        r"\s+(?P<x_fplo_t_dftPu_species_subshell_U__eV>" + RE_f + r")" +
-                                        r"\s+(?P<x_fplo_t_dftPu_species_subshell_J__eV>" + RE_f + r")" +
+                                        r"\s*(?P<x_fplo_t_dft_plus_u_species_subshell_species>\d+)" +
+                                        r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_element>\S+)" +
+                                        r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_subshell>\S+)" +
+                                        r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_F0__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_F2__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_F4__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_F6__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_U__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_J__eV>" + RE_f + r")" +
                                         r"\s*$"
                                     )
                                  ),
@@ -335,12 +335,12 @@ class ParserFplo14(object):
                                  SM(name='mLSDApU_correlated_sites_line', repeats=True,
                                     startReStr=(
                                         r"\s*LSDA\+U:" +
-                                        r"\s*(?P<x_fplo_t_dftPu_site_index>\d+)" +
-                                        r"\s+(?P<x_fplo_t_dftPu_site_element>\S+)" +
-                                        r"\s*(?P<x_fplo_t_dftPu_site_species>\d+)" +
-                                        r"\s+(?P<x_fplo_t_dftPu_site_subshell>\S+)" +
-                                        r"\s+(?P<x_fplo_t_dftPu_site_ubi1>\d+)" +
-                                        r"\s+(?P<x_fplo_t_dftPu_site_ubi2>\d+)" +
+                                        r"\s*(?P<x_fplo_t_dft_plus_u_site_index>\d+)" +
+                                        r"\s+(?P<x_fplo_t_dft_plus_u_site_element>\S+)" +
+                                        r"\s*(?P<x_fplo_t_dft_plus_u_site_species>\d+)" +
+                                        r"\s+(?P<x_fplo_t_dft_plus_u_site_subshell>\S+)" +
+                                        r"\s+(?P<x_fplo_t_dft_plus_u_site_ubi1>\d+)" +
+                                        r"\s+(?P<x_fplo_t_dft_plus_u_site_ubi2>\d+)" +
                                         r"\s*$"
                                     )
                                  ),
@@ -409,45 +409,47 @@ class ParserFplo14(object):
         ])
         backend.addArrayValues('energy_reference_fermi_iteration', eFermi)
 
-    def get_dftPu_per_species_orbital(self, section_method):
-        dftPu_per_species_orbital = {}
-        for species_orbital_idx in range(len(section_method['x_fplo_t_dftPu_species_subshell_species'])):
-            species = section_method['x_fplo_t_dftPu_species_subshell_species'][species_orbital_idx]
-            subshell = section_method['x_fplo_t_dftPu_species_subshell_subshell'][species_orbital_idx]
-            if dftPu_per_species_orbital.get(species,None) is None:
-                dftPu_per_species_orbital[species] = {}
-            dftPu_per_species_orbital[species][subshell] = {
-                'x_fplo_dftPu_orbital_species': species,
-                'x_fplo_dftPu_orbital_label': subshell,
-                'x_fplo_dftPu_orbital_element':
-                    section_method['x_fplo_t_dftPu_species_subshell_element'][species_orbital_idx],
-                'x_fplo_dftPu_orbital_F0':
-                    section_method['x_fplo_t_dftPu_species_subshell_F0'][species_orbital_idx],
-                'x_fplo_dftPu_orbital_F2':
-                    section_method['x_fplo_t_dftPu_species_subshell_F2'][species_orbital_idx],
-                'x_fplo_dftPu_orbital_F4':
-                    section_method['x_fplo_t_dftPu_species_subshell_F4'][species_orbital_idx],
-                'x_fplo_dftPu_orbital_F6':
-                    section_method['x_fplo_t_dftPu_species_subshell_F6'][species_orbital_idx],
-                'x_fplo_dftPu_orbital_U':
-                    section_method['x_fplo_t_dftPu_species_subshell_U'][species_orbital_idx],
-                'x_fplo_dftPu_orbital_J':
-                    section_method['x_fplo_t_dftPu_species_subshell_J'][species_orbital_idx],
+    def get_dft_plus_u_per_species_orbital(self, section_method):
+        dft_plus_u_per_species_orbital = {}
+        for species_orbital_idx in range(len(section_method['x_fplo_t_dft_plus_u_species_subshell_species'])):
+            species = section_method['x_fplo_t_dft_plus_u_species_subshell_species'][species_orbital_idx]
+            subshell = section_method['x_fplo_t_dft_plus_u_species_subshell_subshell'][species_orbital_idx]
+            if dft_plus_u_per_species_orbital.get(species,None) is None:
+                dft_plus_u_per_species_orbital[species] = {}
+            dft_plus_u_per_species_orbital[species][subshell] = {
+                # code-independent orbital data
+                'dft_plus_u_orbital_label': subshell,
+                'dft_plus_u_orbital_U':
+                    section_method['x_fplo_t_dft_plus_u_species_subshell_U'][species_orbital_idx],
+                'dft_plus_u_orbital_J':
+                    section_method['x_fplo_t_dft_plus_u_species_subshell_J'][species_orbital_idx],
+                # code-specific orbital data
+                'x_fplo_dft_plus_u_orbital_species': species,
+                'x_fplo_dft_plus_u_orbital_element':
+                    section_method['x_fplo_t_dft_plus_u_species_subshell_element'][species_orbital_idx],
+                'x_fplo_dft_plus_u_orbital_F0':
+                    section_method['x_fplo_t_dft_plus_u_species_subshell_F0'][species_orbital_idx],
+                'x_fplo_dft_plus_u_orbital_F2':
+                    section_method['x_fplo_t_dft_plus_u_species_subshell_F2'][species_orbital_idx],
+                'x_fplo_dft_plus_u_orbital_F4':
+                    section_method['x_fplo_t_dft_plus_u_species_subshell_F4'][species_orbital_idx],
+                'x_fplo_dft_plus_u_orbital_F6':
+                    section_method['x_fplo_t_dft_plus_u_species_subshell_F6'][species_orbital_idx],
             }
-        return dftPu_per_species_orbital
+        return dft_plus_u_per_species_orbital
 
-    def get_dftPu_orbitals(self, section_method):
-        dftPu_orbitals = []
-        dftPu_per_species_orbital = self.get_dftPu_per_species_orbital(section_method)
-        for dftPu_idx in range(len(section_method['x_fplo_t_dftPu_site_index'])):
-            site = section_method['x_fplo_t_dftPu_site_index'][dftPu_idx]
-            element = section_method['x_fplo_t_dftPu_site_element'][dftPu_idx]
-            species = section_method['x_fplo_t_dftPu_site_species'][dftPu_idx]
-            orbital = section_method['x_fplo_t_dftPu_site_subshell'][dftPu_idx]
-            dftPu_orbital = dftPu_per_species_orbital[species][orbital].copy()
-            dftPu_orbital['x_fplo_dftPu_orbital_atom'] = site - 1
-            dftPu_orbitals.append(dftPu_orbital)
-        return dftPu_orbitals
+    def get_dft_plus_u_orbitals(self, section_method):
+        dft_plus_u_orbitals = []
+        dft_plus_u_per_species_orbital = self.get_dft_plus_u_per_species_orbital(section_method)
+        for dft_plus_u_idx in range(len(section_method['x_fplo_t_dft_plus_u_site_index'])):
+            site = section_method['x_fplo_t_dft_plus_u_site_index'][dft_plus_u_idx]
+            element = section_method['x_fplo_t_dft_plus_u_site_element'][dft_plus_u_idx]
+            species = section_method['x_fplo_t_dft_plus_u_site_species'][dft_plus_u_idx]
+            orbital = section_method['x_fplo_t_dft_plus_u_site_subshell'][dft_plus_u_idx]
+            dft_plus_u_orbital = dft_plus_u_per_species_orbital[species][orbital].copy()
+            dft_plus_u_orbital['dft_plus_u_orbital_atom'] = site - 1 # FPLO site counts one-based
+            dft_plus_u_orbitals.append(dft_plus_u_orbital)
+        return dft_plus_u_orbitals
 
     def onOpen_section_method(
             self, backend, gIndex, section):
@@ -457,12 +459,12 @@ class ParserFplo14(object):
     def onClose_section_method(
             self, backend, gIndex, section):
         # check for DFT+U vs. DFT
-        if section['x_fplo_dftPu_projection'] is None:
+        if section['x_fplo_t_dft_plus_u_projection_type'] is None:
             backend.addValue('electronic_structure_method', 'DFT')
         else:
             backend.addValue('electronic_structure_method', 'DFT+U')
-            self.addSectionDictList(backend, 'x_fplo_section_dftPu_orbital',
-                                    self.get_dftPu_orbitals(section))
+            self.addSectionDictList(backend, 'section_dft_plus_u_orbital',
+                                    self.get_dft_plus_u_orbitals(section))
 
     def onOpen_section_run(
             self, backend, gIndex, section):
