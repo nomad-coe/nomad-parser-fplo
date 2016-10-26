@@ -53,6 +53,15 @@ FPLO_XC_FUNCTIONAL = {
     ],
 }
 
+FPLO_DFT_PLUS_U_PROJECTION_TYPE = {
+    'orthogonal': 'orthogonalized atomic',
+}
+
+FPLO_DFT_PLUS_U_FUNCTIONAL = {
+    'LSDA+U Atomic limit      (AL)': 'fully localized limit',
+    'LSDA+U Around mean field (AMF/OP)': 'around mean field',
+}
+
 class ParserFplo14(object):
     """main place to keep the parser status, open ancillary files,..."""
     def __init__(self):
@@ -299,9 +308,13 @@ class ParserFplo14(object):
                subMatchers=[
                    SM(name='mLSDApU_projection',
                       startReStr=r"\s*LSDA\+U:\s*Projection\s*:\s*(?P<x_fplo_dft_plus_u_projection_type>\S+?)\s*$",
+                      adHoc=lambda p: p.backend.addValue('dft_plus_u_projection_type',
+                          FPLO_DFT_PLUS_U_PROJECTION_TYPE[p.lastMatch['x_fplo_dft_plus_u_projection_type']]),
                    ),
                    SM(name='mLSDApU_functional',
                       startReStr=r"\s*LSDA\+U:\s*Functional\s*:\s*(?P<x_fplo_dft_plus_u_functional>.+?)\s*$",
+                      adHoc=lambda p: p.backend.addValue('dft_plus_u_functional',
+                          FPLO_DFT_PLUS_U_FUNCTIONAL[p.lastMatch['x_fplo_dft_plus_u_functional']]),
                    ),
                    SM(name='mLSDApU_n_correlated_states',
                       startReStr=r"\s*LSDA\+U:\s*\d+\s*Correlated states",
