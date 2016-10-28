@@ -93,12 +93,33 @@ class FploInputParser(object):
             m = cRE_end_newline.match(what)
             self.__annotateFile.write(highlight + m.group(1) + ANSI.RESET + m.group(2))
 
+    def literal2python(self, match):
+        if match.group('str_d') is not None:
+            return match.group('str_d')
+        if match.group('str_s') is not None:
+            return match.group('str_s')
+        if match.group('float') is not None:
+            return float(match.group('float'))
+        if match.group('hex_int') is not None:
+            return int(match.group('hex_int'), base=16)
+        if match.group('octal_int') is not None:
+            return int(match.group('octal_int'), base=8)
+        if match.group('decimal_int') is not None:
+            return int(match.group('decimal_int'))
+        if match.group('logical') is not None:
+            if match.group('logical') == 't':
+                return True
+            else:
+                return False
+        raise RuntimeError('no idea what to do with literal "%s"' % (match.group(0)))
+
     def state_root(self, line, pos_in_line):
         """state: no open section, i.e. at the root of the namelist"""
         # match literals
         m = cRE_literal.match(line, pos_in_line)
         if m is not None:
             self.annotate(m.group(), ANSI.FG_MAGENTA)
+            lit = self.literal2python(m)
             return m.end()
         # match identifier or keyword
         m = cRE_kw_ident.match(line, pos_in_line)
