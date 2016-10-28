@@ -164,6 +164,8 @@ class FploInputParser(object):
 
     def onEnd_of_file(self):
         """hook: called at the end of parsing"""
+        sys.stdout.flush()
+        sys.stderr.flush()
         sys.stderr.write(json.dumps(self.statements, sort_keys=True, indent=4, separators=(',', ': ')))
 
 if __name__ == "__main__":
