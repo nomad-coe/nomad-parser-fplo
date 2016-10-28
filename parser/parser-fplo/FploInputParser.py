@@ -31,8 +31,8 @@ cRE_literal = re.compile(
     r'\s*' + r'(?:' + r'|'.join([
         # alternates for literals
         # RE_f,
-        r'(?P<str_d>"[^"\\]*(?:\\\\|\\"|[^"]*)*")',
-        r"(?P<str_s>'[^'\\]*(?:\\\\|\\'|[^']*)*')",
+        r'"(?P<str_d>[^"\\]*(?:\\\\|\\"|[^"]*)*)"',
+        r"'(?P<str_s>[^'\\]*(?:\\\\|\\'|[^']*)*)'",
         r'(?P<float>' + (
             r'[+-]?' + # optional sign
             r'\d+(?=[\.eE])' + # positive lookahead: either decimal point or exponential part must follow
