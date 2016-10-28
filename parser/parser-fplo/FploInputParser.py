@@ -42,6 +42,7 @@ cRE_literal = re.compile(
         r'0x(?P<hex_int>[0-9a-fA-F]+)',
         r'0(?P<octal_int>[0-7]+)',
         r'(?P<decimal_int>[+-]?\d+)', # integer with optional sign
+        r'(?P<logical>[tf])(?=\W)',
     ]) + r')'
 )
 
