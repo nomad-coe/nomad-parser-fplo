@@ -46,6 +46,21 @@ cRE_literal = re.compile(
     ]) + r')'
 )
 
+KEYWORDS_LIST = [
+    'section',
+    'struct',
+]
+KEYWORDS = { KEYWORDS_LIST[i]: i for i in range(len(KEYWORDS_LIST)) }
+
+DATATYPES_LIST = [
+    'char',
+    'int',
+    'real',
+    'logical',
+    'flag',
+]
+DATATYPES = { DATATYPES_LIST[i]: i for i in range(len(DATATYPES_LIST)) }
+
 class FploInputParser(object):
     """Parser for C-like FPLO input
     """
@@ -124,7 +139,17 @@ class FploInputParser(object):
         # match identifier or keyword
         m = cRE_kw_ident.match(line, pos_in_line)
         if m is not None:
-            self.annotate(m.group(), ANSI.FG_BRIGHT_GREEN)
+            subtype = KEYWORDS.get(m.group(1), None)
+            if subtype is not None:
+                self.annotate(m.group(), ANSI.FG_YELLOW)
+                self.statement.append(m.group(1))
+                return m.end()
+            subtype = DATATYPES.get(m.group(1), None)
+            if subtype is not None:
+                self.annotate(m.group(), ANSI.FG_GREEN)
+                self.statement.append(m.group(1))
+                return m.end()
+            self.annotate(m.group(), ANSI.FG_BRIGHT_CYAN)
             self.statement.append(m.group(1))
             return m.end()
         # match subscript of previous identifier
