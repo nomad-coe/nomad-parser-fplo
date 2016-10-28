@@ -109,7 +109,7 @@ class FploInputParser(object):
         # match literals
         m = cRE_literal.match(line, pos_in_line)
         if m is not None:
-            self.annotate(m.group(), ANSI.BG_YELLOW)
+            self.annotate(m.group(), ANSI.FG_MAGENTA)
             return m.end()
         # match operators
         m = cRE_operator.match(line, pos_in_line)
