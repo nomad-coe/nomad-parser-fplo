@@ -95,6 +95,11 @@ class FploInputParser(object):
 
     def state_root(self, line, pos_in_line):
         """state: no open section, i.e. at the root of the namelist"""
+        # match literals
+        m = cRE_literal.match(line, pos_in_line)
+        if m is not None:
+            self.annotate(m.group(), ANSI.FG_MAGENTA)
+            return m.end()
         # match identifier or keyword
         m = cRE_kw_ident.match(line, pos_in_line)
         if m is not None:
@@ -105,11 +110,6 @@ class FploInputParser(object):
         m = cRE_subscript.match(line, pos_in_line)
         if m is not None:
             self.annotate(m.group(), ANSI.FG_GREEN)
-            return m.end()
-        # match literals
-        m = cRE_literal.match(line, pos_in_line)
-        if m is not None:
-            self.annotate(m.group(), ANSI.FG_MAGENTA)
             return m.end()
         # match operators
         m = cRE_operator.match(line, pos_in_line)
