@@ -128,6 +128,11 @@ class FploInputParser(object):
                 return False
         raise RuntimeError('no idea what to do with literal "%s"' % (match.group(0)))
 
+    def _annotate(self, what):
+        """write string to annotateFile if present"""
+        if self.__annotateFile:
+            self.__annotateFile.write(what)
+
     def state_root(self, line, pos_in_line):
         """state: no open section, i.e. at the root of the namelist"""
         # match literals
