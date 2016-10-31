@@ -10,56 +10,190 @@ from nomadcore.match_highlighter import ANSI
 LOGGER = logging.getLogger(__name__)
 
 
-cRE_end_newline = re.compile(r'(.*?)(\n*)$')
+class TokenMatchError(Exception):
+    pass
 
-# keywords/identifiers
-cRE_kw_ident = re.compile(r'\s*([a-zA-Z_][a-zA-Z0-9_]*)')
-# comments
-cRE_comment = re.compile(r'\s*(?:(//|#)|(/\*))(?P<comment>.*)')
 
-cRE_trailing_whitespace = re.compile(r'\s+$')
+class token(object):
+    highlight_start = ''
+    highlight_end = ANSI.RESET
+    regex = None
+    cRE_end_newline = re.compile(r'(.*?)(\n*)$')
 
-cRE_opening_brace = re.compile(r'\s*\{')
-cRE_closing_brace = re.compile(r'\s*\}')
-cRE_end_statement = re.compile(r'\s*;')
+    def __init__(self, line, pos_in_line):
+        """token constructor takes re.match object as arg"""
+        self.match = self.regex.match(line, pos_in_line)
+        if self.match is None:
+            raise TokenMatchError
+        self.value_str = self.match.group(0)
+        self.value = self.match2value()
 
-cRE_subscript = re.compile(r'\[([^\]]*)\]')
+    def highlighted(self):
+        """return ANSI-highlighted token"""
+        m = self.cRE_end_newline.match(self.value_str)
+        return self.highlight_start + m.group(1) + self.highlight_end + m.group(2)
 
-cRE_operator = re.compile(r'\s*(\+=|\-=|=|,|-|\+|/|\*)')
+    def match2value(self):
+        return None
 
-cRE_literal = re.compile(
-    r'\s*' + r'(?:' + r'|'.join([
-        # alternates for literals
-        # RE_f,
-        r'"(?P<str_d>[^"\\]*(?:\\\\|\\"|[^"]*)*)"',
-        r"'(?P<str_s>[^'\\]*(?:\\\\|\\'|[^']*)*)'",
-        r'(?P<float>' + (
-            r'[+-]?' + # optional sign
-            r'\d+(?=[\.eE])' + # positive lookahead: either decimal point or exponential part must follow
-            r'(?:\.\d*)?' + #cover decimals if present
-            r'(?:[eE][+-]\d+)?' # exponential part if present
-        r')'),
-        r'0x(?P<hex_int>[0-9a-fA-F]+)',
-        r'0(?P<octal_int>[0-7]+)',
-        r'(?P<decimal_int>[+-]?\d+)', # integer with optional sign
-        r'(?P<logical>[tf])(?=\W)',
-    ]) + r')'
-)
 
-KEYWORDS_LIST = [
-    'section',
-    'struct',
-]
-KEYWORDS = { KEYWORDS_LIST[i]: i for i in range(len(KEYWORDS_LIST)) }
+class token_literal(token):
+    regex = re.compile(
+        r'\s*' + r'(?:' + r'|'.join([
+            # alternates for literals
+            # RE_f,
+            r'"(?P<str_d>[^"\\]*(?:\\\\|\\"|[^"]*)*)"',
+            r"'(?P<str_s>[^'\\]*(?:\\\\|\\'|[^']*)*)'",
+            r'(?P<float>' + (
+                r'[+-]?' + # optional sign
+                r'\d+(?=[\.eE])' + # positive lookahead: either decimal point or exponential part must follow
+                r'(?:\.\d*)?' + #cover decimals if present
+                r'(?:[eE][+-]\d+)?' # exponential part if present
+            r')'),
+            r'0x(?P<hex_int>[0-9a-fA-F]+)',
+            r'0(?P<octal_int>[0-7]+)',
+            r'(?P<decimal_int>[+-]?\d+)', # integer with optional sign
+            r'(?P<logical>[tf])(?=\W)',
+        ]) + r')'
+    )
 
-DATATYPES_LIST = [
-    'char',
-    'int',
-    'real',
-    'logical',
-    'flag',
-]
-DATATYPES = { DATATYPES_LIST[i]: i for i in range(len(DATATYPES_LIST)) }
+    def match2value(self):
+        match = self.match
+        if match.group('str_d') is not None:
+            return match.group('str_d')
+        if match.group('str_s') is not None:
+            return match.group('str_s')
+        if match.group('float') is not None:
+            return float(match.group('float'))
+        if match.group('hex_int') is not None:
+            return int(match.group('hex_int'), base=16)
+        if match.group('octal_int') is not None:
+            return int(match.group('octal_int'), base=8)
+        if match.group('decimal_int') is not None:
+            return int(match.group('decimal_int'))
+        if match.group('logical') is not None:
+            if match.group('logical') == 't':
+                return True
+            else:
+                return False
+        raise RuntimeError('no idea what to do with literal "%s"' % (match.group(0)))
+
+
+class token_datatype(token):
+    regex = re.compile(r'\s*([a-zA-Z_][a-zA-Z0-9_]*)')
+    subtype_list = []
+    subtype_dict = {}
+
+    def match2value(self):
+        value = self.subtype_dict.get(self.match.group(1), None)
+        if value is None:
+            raise TokenMatchError
+        return value
+
+token_datatype.subtype_list = [
+        'char',
+        'int',
+        'real',
+        'logical',
+        'flag',
+    ]
+
+token_datatype.subtype_dict = { token_datatype.subtype_list[i]: i for i in range(len(token_datatype.subtype_list)) }
+
+
+class token_keyword(token):
+    regex = re.compile(r'\s*([a-zA-Z_][a-zA-Z0-9_]*)')
+    subtype_list = []
+    subtype_dict = {}
+
+    def match2value(self):
+        value = self.subtype_dict.get(self.match.group(1), None)
+        if value is None:
+            raise TokenMatchError
+        return value
+
+
+token_keyword.subtype_list = [
+        'section',
+        'struct',
+    ]
+
+token_keyword.subtype_dict = { token_keyword.subtype_list[i]: i for i in range(len(token_keyword.subtype_list)) }
+
+
+class token_identifier(token):
+    regex = re.compile(r'\s*([a-zA-Z_][a-zA-Z0-9_]*)')
+
+    def match2value(self):
+        return self.match.group(1)
+
+class token_subscript_begin(token):
+    regex = re.compile(r'\[')
+
+
+class token_subscript_end(token):
+    regex = re.compile(r'\]')
+
+
+class token_operator(token):
+    regex = re.compile(r'\s*(\+=|\-=|=|,|-|\+|/|\*)')
+
+    def match2value(self):
+        return self.match.group(1)
+
+
+class token_block_begin(token):
+    regex = re.compile(r'\s*\{')
+
+
+class token_block_end(token):
+    regex = re.compile(r'\s*\}')
+
+
+class token_statement_end(token):
+    regex = re.compile(r'\s*;')
+
+
+class token_line_comment(token):
+    regex = re.compile(r'\s*(?:(//|#)|(/\*))(?P<comment>.*)')
+
+    def match2value(self):
+        return self.match.group('comment')
+
+class token_trailing_whitespace(token):
+    regex = re.compile(r'\s+$')
+
+class token_bad_input(token):
+    regex = re.compile('(.+)$')
+
+    def match2value(self):
+        return self.match.group(1)
+
+class token_flag_value(token):
+    regex = re.compile(r'\(([+-])\)')
+
+    def match2value(self):
+        if self.match.group(1) == '+':
+            return True
+        else:
+            return False
+
+
+token_literal.highlight_start = ANSI.FG_MAGENTA
+token_datatype.highlight_start = ANSI.FG_YELLOW
+token_keyword.highlight_start = ANSI.FG_BRIGHT_YELLOW
+token_identifier.highlight_start = ANSI.FG_CYAN
+token_subscript_begin.highlight_start = ANSI.FG_BRIGHT_GREEN
+token_subscript_end.highlight_start = ANSI.FG_BRIGHT_GREEN
+token_operator.highlight_start = ANSI.FG_RED
+token_block_begin.highlight_start = ANSI.FG_BRIGHT_CYAN
+token_block_end.highlight_start = ANSI.FG_BRIGHT_CYAN
+token_statement_end.highlight_start = ANSI.FG_BRIGHT_YELLOW
+token_line_comment.highlight_start = ANSI.FG_BLUE
+token_trailing_whitespace.highlight_start = ANSI.BG_BLUE
+token_bad_input.highlight_start = ANSI.BEGIN_INVERT + ANSI.FG_BRIGHT_RED
+token_flag_value.highlight_start = ANSI.FG_MAGENTA
+
 
 class FploInputParser(object):
     """Parser for C-like FPLO input
@@ -98,35 +232,6 @@ class FploInputParser(object):
                 break
             else:
                 pos_in_line = new_pos_in_line
-        if pos_in_line < len(line):
-            self.bad_input = True
-            self.annotate(line[pos_in_line:], ANSI.BEGIN_INVERT + ANSI.FG_BRIGHT_RED)
-
-    def annotate(self, what, highlight):
-        """write string to annotateFile with ANSI highlight/reset sequences"""
-        if self.__annotateFile:
-            m = cRE_end_newline.match(what)
-            self.__annotateFile.write(highlight + m.group(1) + ANSI.RESET + m.group(2))
-
-    def literal2python(self, match):
-        if match.group('str_d') is not None:
-            return match.group('str_d')
-        if match.group('str_s') is not None:
-            return match.group('str_s')
-        if match.group('float') is not None:
-            return float(match.group('float'))
-        if match.group('hex_int') is not None:
-            return int(match.group('hex_int'), base=16)
-        if match.group('octal_int') is not None:
-            return int(match.group('octal_int'), base=8)
-        if match.group('decimal_int') is not None:
-            return int(match.group('decimal_int'))
-        if match.group('logical') is not None:
-            if match.group('logical') == 't':
-                return True
-            else:
-                return False
-        raise RuntimeError('no idea what to do with literal "%s"' % (match.group(0)))
 
     def _annotate(self, what):
         """write string to annotateFile if present"""
@@ -135,79 +240,37 @@ class FploInputParser(object):
 
     def state_root(self, line, pos_in_line):
         """state: no open section, i.e. at the root of the namelist"""
-        # match literals
-        m = cRE_literal.match(line, pos_in_line)
-        if m is not None:
-            self.annotate(m.group(), ANSI.FG_MAGENTA)
-            lit = self.literal2python(m)
-            return m.end()
-        # match identifier or keyword
-        m = cRE_kw_ident.match(line, pos_in_line)
-        if m is not None:
-            subtype = KEYWORDS.get(m.group(1), None)
-            if subtype is not None:
-                self.annotate(m.group(), ANSI.FG_YELLOW)
-                self.statement.append(m.group(1))
-                return m.end()
-            subtype = DATATYPES.get(m.group(1), None)
-            if subtype is not None:
-                self.annotate(m.group(), ANSI.FG_GREEN)
-                self.statement.append(m.group(1))
-                return m.end()
-            self.annotate(m.group(), ANSI.FG_BRIGHT_CYAN)
-            self.statement.append(m.group(1))
-            return m.end()
-        # match subscript of previous identifier
-        m = cRE_subscript.match(line, pos_in_line)
-        if m is not None:
-            self.annotate(m.group(), ANSI.FG_GREEN)
-            return m.end()
-        # match operators
-        m = cRE_operator.match(line, pos_in_line)
-        if m is not None:
-            self.annotate(m.group(), ANSI.FG_YELLOW)
-            return m.end()
-        # match block-open
-        m = cRE_opening_brace.match(line, pos_in_line)
-        if m is not None:
-            self.annotate(m.group(), ANSI.FG_BRIGHT_CYAN)
-            self.parent_stack.append(self.statement)
-            self.statement.append([])
-            self.statement = self.statement[-1]
-            return m.end()
-        # match block-close
-        m = cRE_closing_brace.match(line, pos_in_line)
-        if m is not None:
-            self.statement = self.parent_stack.pop()
-            self.annotate(m.group(), ANSI.FG_BRIGHT_CYAN)
-            return m.end()
-        # match statement-finishing semicolon
-        m = cRE_end_statement.match(line, pos_in_line)
-        if m is not None:
-            self.statement = []
-            self.parent_stack[-1].append(self.statement)
-            self.annotate(m.group(), ANSI.FG_BRIGHT_YELLOW)
-            return m.end()
-        # match up-to-eol comments
-        m = cRE_comment.match(line, pos_in_line)
-        if m is not None:
-            self.annotate(m.group(), ANSI.FG_BLUE)
-            # self.onComment(m.group('comment'))
-            return m.end()
-        # ignore remaining whitespace
-        m = cRE_trailing_whitespace.match(line, pos_in_line)
-        if m is not None:
-            self.annotate(m.group(), ANSI.BG_BLUE)
-            return m.end()
-        # # nothing matched, call hook
-        # return self.onRoot_data(line, pos_in_line)
-
-    def onRoot_data(self, line, pos_in_line):
-        """hook: called if data appears outside namelists groups, directly
-        at root level within the file;
-        data means: line is not empty or a comment
-        useful for code-specific extensions beyond the F90 namelist standard
-        """
+        this_token = None
+        for try_token in [token_literal, token_flag_value, token_datatype,
+                          token_keyword,
+                          token_identifier, token_subscript_begin,
+                          token_subscript_end, token_operator,
+                          token_block_begin, token_block_end,
+                          token_statement_end, token_line_comment,
+                          token_trailing_whitespace,
+                          token_bad_input,
+                          ]:
+            try:
+                this_token = try_token(line, pos_in_line)
+            except TokenMatchError:
+                pass
+            if this_token is not None:
+                break
+        if this_token is not None:
+            self._annotate(this_token.highlighted())
+            # LOGGER.error('cls: %s', this_token.__class__.__name__)
+            if isinstance(this_token, token_block_begin):
+                self.parent_stack.append(self.statement)
+                self.statement.append([])
+                self.statement = self.statement[-1]
+            elif isinstance(this_token, token_block_end):
+                self.statement = self.parent_stack.pop()
+            elif isinstance(this_token, token_statement_end):
+                self.statement = []
+                self.parent_stack[-1].append(self.statement)
+            elif isinstance(this_token, token_bad_input):
+                self.bad_input = True
+            return this_token.match.end()
         return None
 
     def onBad_input(self):
