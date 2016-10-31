@@ -305,6 +305,13 @@ class FploInputParser(object):
                 self.statement = newblock.items[0]
             elif isinstance(this_token, token_block_end):
                 self.statement = self.statement.parent.parent
+            elif isinstance(this_token, token_subscript_begin):
+                newsubscript = subscript(self.statement)
+                newsubscript.append(statement(newsubscript))
+                self.statement.append(newsubscript)
+                self.statement = newsubscript.items[0]
+            elif isinstance(this_token, token_subscript_end):
+                self.statement = self.statement.parent.parent
             elif isinstance(this_token, token_statement_end):
                 self.statement.parent.append(statement(self.statement.parent))
                 self.statement = self.statement.parent.items[-1]
