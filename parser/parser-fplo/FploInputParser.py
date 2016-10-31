@@ -135,6 +135,7 @@ class token_identifier(token):
     def match2value(self):
         return self.match.group(1)
 
+
 class token_subscript_begin(token):
     regex = re.compile(r'\[')
 
