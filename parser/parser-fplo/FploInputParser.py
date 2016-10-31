@@ -36,6 +36,9 @@ class token(object):
     def match2value(self):
         return None
 
+    def __str__(self):
+        return "%10s %s" % (self.__class__.__name__, str(self.value))
+
 
 class token_literal(token):
     regex = re.compile(
@@ -90,6 +93,9 @@ class token_datatype(token):
             raise TokenMatchError
         return value
 
+    def __str__(self):
+        return "%10s %s" % (self.__class__.__name__, str(self.subtype_list[self.value]))
+
 token_datatype.subtype_list = [
         'char',
         'int',
@@ -112,6 +118,8 @@ class token_keyword(token):
             raise TokenMatchError
         return value
 
+    def __str__(self):
+        return "%10s %s" % (self.__class__.__name__, str(self.subtype_list[self.value]))
 
 token_keyword.subtype_list = [
         'section',
