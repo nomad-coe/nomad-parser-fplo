@@ -204,6 +204,36 @@ token_bad_input.highlight_start = ANSI.BEGIN_INVERT + ANSI.FG_BRIGHT_RED
 token_flag_value.highlight_start = ANSI.FG_MAGENTA
 
 
+class syntax_node(object):
+    def __init__(self, parent):
+        self.items = []
+        # backref
+        self.parent = parent
+
+    def append(self, item):
+        self.items.append(item)
+
+    def indented_dump(self, indent):
+        result = indent + self.__class__.__name__ + ":\n"
+        for item in self.items:
+            if isinstance(item, syntax_node):
+                result = result + item.indented_dump(indent + '  ')
+            else:
+                result = result + indent + '  ' + str(item) + '\n'
+        return result
+
+class statement(syntax_node):
+    pass
+
+
+class block(syntax_node):
+    pass
+
+
+class subscript(syntax_node):
+    pass
+
+
 class FploInputParser(object):
     """Parser for C-like FPLO input
     """
@@ -212,11 +242,11 @@ class FploInputParser(object):
         self.file_path = file_path
         self.state = self.state_root
         self.__annotateFile = annotateFile
-        self.__cre_closing = None
         self.bad_input = False
-        self.statements = [[]]
-        self.parent_stack = [self.statements]
-        self.statement = self.statements[-1]
+        # start with root block, and add empty statement to append to
+        self.statements = block(None)
+        self.statements.append(statement(self.statements))
+        self.statement = self.statements.items[-1]
 
     def parse(self):
         """open file and parse line-by-line"""
@@ -269,16 +299,21 @@ class FploInputParser(object):
             self._annotate(this_token.highlighted())
             # LOGGER.error('cls: %s', this_token.__class__.__name__)
             if isinstance(this_token, token_block_begin):
-                self.parent_stack.append(self.statement)
-                self.statement.append([])
-                self.statement = self.statement[-1]
+                newblock = block(self.statement)
+                newblock.append(statement(newblock))
+                self.statement.append(newblock)
+                self.statement = newblock.items[0]
             elif isinstance(this_token, token_block_end):
-                self.statement = self.parent_stack.pop()
+                self.statement = self.statement.parent.parent
             elif isinstance(this_token, token_statement_end):
-                self.statement = []
-                self.parent_stack[-1].append(self.statement)
+                self.statement.parent.append(statement(self.statement.parent))
+                self.statement = self.statement.parent.items[-1]
             elif isinstance(this_token, token_bad_input):
                 self.bad_input = True
+            elif isinstance(this_token, (token_line_comment, token_trailing_whitespace)):
+                pass
+            else:
+                self.statement.append(this_token)
             return this_token.match.end()
         return None
 
@@ -290,7 +325,7 @@ class FploInputParser(object):
         """hook: called at the end of parsing"""
         sys.stdout.flush()
         sys.stderr.flush()
-        sys.stderr.write(json.dumps(self.statements, sort_keys=True, indent=4, separators=(',', ': ')))
+        sys.stderr.write(self.statements.indented_dump('')) # json.dumps(self.statements, sort_keys=True, indent=4, separators=(',', ': ')))
 
 if __name__ == "__main__":
     parser = FploInputParser(sys.argv[1], annotateFile=sys.stdout)
