@@ -204,7 +204,7 @@ token_bad_input.highlight_start = ANSI.BEGIN_INVERT + ANSI.FG_BRIGHT_RED
 token_flag_value.highlight_start = ANSI.FG_MAGENTA
 
 
-class syntax_node(object):
+class concrete_node(object):
     def __init__(self, parent):
         self.items = []
         # backref
@@ -218,7 +218,7 @@ class syntax_node(object):
             return ''
         result = indent + self.__class__.__name__ + ":\n"
         for item in self.items:
-            if isinstance(item, syntax_node):
+            if isinstance(item, concrete_node):
                 result = result + item.indented_dump(indent + '  ')
             else:
                 result = result + indent + '  ' + str(item) + '\n'
@@ -228,7 +228,7 @@ class syntax_node(object):
         pass
 
 
-class statement(syntax_node):
+class concrete_statement(concrete_node):
     def nomadmetainfo(self, prefix, indent):
         if len(self.items) < 1:
             return None
@@ -237,19 +237,19 @@ class statement(syntax_node):
                 # section
                 secname = prefix + '.' + self.items[1].value
                 sys.stderr.write("%ssection %s\n" % (indent, secname))
-                if isinstance(self.items[2], block):
+                if isinstance(self.items[2], concrete_block):
                     self.items[2].nomadmetainfo(secname, indent + '  ')
                 else:
                     raise Exception("No block for %s" % (indent + '  '))
             elif self.items[0].value == 1:
                 structname = prefix + '.' + self.items[2].value
-                if len(self.items) > 3 and isinstance(self.items[3], subscript):
+                if len(self.items) > 3 and isinstance(self.items[3], concrete_subscript):
                     struct_subscript = str(self.items[3])
                 else:
                     struct_subscript = ''
                 # struct
                 sys.stderr.write("%sstruct %s%s\n" % (indent, structname, struct_subscript))
-                if isinstance(self.items[1], block):
+                if isinstance(self.items[1], concrete_block):
                     self.items[1].nomadmetainfo(structname, indent + '  ')
                 else:
                     sys.stderr.write("%s NOBLOCK" % (indent + '  '))
@@ -260,7 +260,7 @@ class statement(syntax_node):
 
 
 
-class block(syntax_node):
+class concrete_block(concrete_node):
     def nomadmetainfo(self, prefix, indent):
         if len(self.items) < 1:
             return None
@@ -268,7 +268,7 @@ class block(syntax_node):
             item.nomadmetainfo(prefix, indent)
 
 
-class subscript(statement):
+class concrete_subscript(concrete_statement):
     def __str__(self):
         result = '['
         for item in self.items:
@@ -287,9 +287,9 @@ class FploInputParser(object):
         self.__annotateFile = annotateFile
         self.bad_input = False
         # start with root block, and add empty statement to append to
-        self.statements = block(None)
-        self.statements.append(statement(self.statements))
-        self.statement = self.statements.items[-1]
+        self.concrete_statements = concrete_block(None)
+        self.concrete_statements.append(concrete_statement(self.concrete_statements))
+        self.current_concrete_statement = self.concrete_statements.items[-1]
 
     def parse(self):
         """open file and parse line-by-line"""
@@ -342,27 +342,27 @@ class FploInputParser(object):
             self._annotate(this_token.highlighted())
             # LOGGER.error('cls: %s', this_token.__class__.__name__)
             if isinstance(this_token, token_block_begin):
-                newblock = block(self.statement)
-                newblock.append(statement(newblock))
-                self.statement.append(newblock)
-                self.statement = newblock.items[0]
+                newblock = concrete_block(self.current_concrete_statement)
+                newblock.append(concrete_statement(newblock))
+                self.current_concrete_statement.append(newblock)
+                self.current_concrete_statement = newblock.items[0]
             elif isinstance(this_token, token_block_end):
-                self.statement = self.statement.parent.parent
+                self.current_concrete_statement = self.current_concrete_statement.parent.parent
             elif isinstance(this_token, token_subscript_begin):
-                newsubscript = subscript(self.statement)
-                self.statement.append(newsubscript)
-                self.statement = newsubscript
+                newsubscript = concrete_subscript(self.current_concrete_statement)
+                self.current_concrete_statement.append(newsubscript)
+                self.current_concrete_statement = newsubscript
             elif isinstance(this_token, token_subscript_end):
-                self.statement = self.statement.parent
+                self.current_concrete_statement = self.current_concrete_statement.parent
             elif isinstance(this_token, token_statement_end):
-                self.statement.parent.append(statement(self.statement.parent))
-                self.statement = self.statement.parent.items[-1]
+                self.current_concrete_statement.parent.append(concrete_statement(self.current_concrete_statement.parent))
+                self.current_concrete_statement = self.current_concrete_statement.parent.items[-1]
             elif isinstance(this_token, token_bad_input):
                 self.bad_input = True
             elif isinstance(this_token, (token_line_comment, token_trailing_whitespace)):
                 pass
             else:
-                self.statement.append(this_token)
+                self.current_concrete_statement.append(this_token)
             return this_token.match.end()
         return None
 
@@ -374,8 +374,8 @@ class FploInputParser(object):
         """hook: called at the end of parsing"""
         sys.stdout.flush()
         sys.stderr.flush()
-        # sys.stderr.write(self.statements.indented_dump('')) # json.dumps(self.statements, sort_keys=True, indent=4, separators=(',', ': ')))
-        self.statements.nomadmetainfo('x_fplo_in','')
+        # sys.stderr.write(self.concrete_statements.indented_dump('')) # json.dumps(self.concrete_statements, sort_keys=True, indent=4, separators=(',', ': ')))
+        self.concrete_statements.nomadmetainfo('x_fplo_in','')
 
 if __name__ == "__main__":
     parser = FploInputParser(sys.argv[1], annotateFile=sys.stdout)
