@@ -253,6 +253,11 @@ class statement(syntax_node):
                     self.items[1].nomadmetainfo(structname, indent + '  ')
                 else:
                     sys.stderr.write("%s NOBLOCK" % (indent + '  '))
+        elif isinstance(self.items[0], token_datatype):
+            sys.stderr.write("%s%s\n" % (indent + '  ', self.items[0].subtype_list[self.items[0].value]))
+        else:
+            LOGGER.error("no idea what to do with statement starting with %s", str(self.items[0]))
+
 
 
 class block(syntax_node):
