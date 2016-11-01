@@ -214,6 +214,8 @@ class syntax_node(object):
         self.items.append(item)
 
     def indented_dump(self, indent):
+        if len(self.items) < 1:
+            return ''
         result = indent + self.__class__.__name__ + ":\n"
         for item in self.items:
             if isinstance(item, syntax_node):
