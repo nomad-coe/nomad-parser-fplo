@@ -338,33 +338,41 @@ class FploInputParser(object):
                 pass
             if this_token is not None:
                 break
-        if this_token is not None:
-            self._annotate(this_token.highlighted())
-            # LOGGER.error('cls: %s', this_token.__class__.__name__)
-            if isinstance(this_token, token_block_begin):
-                newblock = concrete_block(self.current_concrete_statement)
-                newblock.append(concrete_statement(newblock))
-                self.current_concrete_statement.append(newblock)
-                self.current_concrete_statement = newblock.items[0]
-            elif isinstance(this_token, token_block_end):
-                self.current_concrete_statement = self.current_concrete_statement.parent.parent
-            elif isinstance(this_token, token_subscript_begin):
-                newsubscript = concrete_subscript(self.current_concrete_statement)
-                self.current_concrete_statement.append(newsubscript)
-                self.current_concrete_statement = newsubscript
-            elif isinstance(this_token, token_subscript_end):
-                self.current_concrete_statement = self.current_concrete_statement.parent
-            elif isinstance(this_token, token_statement_end):
-                self.current_concrete_statement.parent.append(concrete_statement(self.current_concrete_statement.parent))
-                self.current_concrete_statement = self.current_concrete_statement.parent.items[-1]
-            elif isinstance(this_token, token_bad_input):
-                self.bad_input = True
-            elif isinstance(this_token, (token_line_comment, token_trailing_whitespace)):
-                pass
-            else:
-                self.current_concrete_statement.append(this_token)
-            return this_token.match.end()
-        return None
+        if this_token is None:
+            LOGGER.error("cannot match any token type to '%s'" % (
+                line[pos_in_line:]))
+            return None
+        self._annotate(this_token.highlighted())
+        # LOGGER.error('cls: %s', this_token.__class__.__name__)
+        if isinstance(this_token, token_block_begin):
+            newblock = concrete_block(self.current_concrete_statement)
+            newblock.append(concrete_statement(newblock))
+            self.current_concrete_statement.append(newblock)
+            self.current_concrete_statement = newblock.items[0]
+        elif isinstance(this_token, token_block_end):
+            self.current_concrete_statement = self.current_concrete_statement.parent.parent
+        elif isinstance(this_token, token_subscript_begin):
+            newsubscript = concrete_subscript(self.current_concrete_statement)
+            self.current_concrete_statement.append(newsubscript)
+            self.current_concrete_statement = newsubscript
+        elif isinstance(this_token, token_subscript_end):
+            self.current_concrete_statement = self.current_concrete_statement.parent
+        elif isinstance(this_token, token_statement_end):
+            self.current_concrete_statement.parent.append(concrete_statement(self.current_concrete_statement.parent))
+            self.current_concrete_statement = self.current_concrete_statement.parent.items[-1]
+        elif isinstance(this_token, token_bad_input):
+            self.bad_input = True
+        elif isinstance(this_token, (token_line_comment, token_trailing_whitespace)):
+            # skip comments and trailing whitespace
+            pass
+        elif isinstance(this_token, (
+                    token_literal, token_flag_value, token_operator,
+                    token_datatype, token_keyword, token_identifier
+                )):
+            self.current_concrete_statement.append(this_token)
+        else:
+            raise Exception("Unhandled token type " + this_token.__class__.__name__)
+        return this_token.match.end()
 
     def onBad_input(self):
         """hook: called at the end of parsing if there was any bad input"""
