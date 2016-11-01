@@ -224,12 +224,43 @@ class syntax_node(object):
                 result = result + indent + '  ' + str(item) + '\n'
         return result
 
+    def nomadmetainfo(self, prefix):
+        pass
+
+
 class statement(syntax_node):
-    pass
+    def nomadmetainfo(self, prefix, indent):
+        if len(self.items) < 1:
+            return None
+        if isinstance(self.items[0], token_keyword):
+            if self.items[0].value == 0:
+                # section
+                secname = prefix + '.' + self.items[1].value
+                sys.stderr.write("%ssection %s\n" % (indent, secname))
+                if isinstance(self.items[2], block):
+                    self.items[2].nomadmetainfo(secname, indent + '  ')
+                else:
+                    raise Exception("No block for %s" % (indent + '  '))
+            elif self.items[0].value == 1:
+                structname = prefix + '.' + self.items[2].value
+                if len(self.items) > 3 and isinstance(self.items[3], subscript):
+                    struct_subscript = str(self.items[3])
+                else:
+                    struct_subscript = ''
+                # struct
+                sys.stderr.write("%sstruct %s%s\n" % (indent, structname, struct_subscript))
+                if isinstance(self.items[1], block):
+                    self.items[1].nomadmetainfo(structname, indent + '  ')
+                else:
+                    sys.stderr.write("%s NOBLOCK" % (indent + '  '))
 
 
 class block(syntax_node):
-    pass
+    def nomadmetainfo(self, prefix, indent):
+        if len(self.items) < 1:
+            return None
+        for item in self.items:
+            item.nomadmetainfo(prefix, indent)
 
 
 class subscript(statement):
@@ -338,7 +369,8 @@ class FploInputParser(object):
         """hook: called at the end of parsing"""
         sys.stdout.flush()
         sys.stderr.flush()
-        sys.stderr.write(self.statements.indented_dump('')) # json.dumps(self.statements, sort_keys=True, indent=4, separators=(',', ': ')))
+        # sys.stderr.write(self.statements.indented_dump('')) # json.dumps(self.statements, sort_keys=True, indent=4, separators=(',', ': ')))
+        self.statements.nomadmetainfo('x_fplo_in','')
 
 if __name__ == "__main__":
     parser = FploInputParser(sys.argv[1], annotateFile=sys.stdout)
