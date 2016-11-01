@@ -232,8 +232,13 @@ class block(syntax_node):
     pass
 
 
-class subscript(syntax_node):
-    pass
+class subscript(statement):
+    def __str__(self):
+        result = '['
+        for item in self.items:
+            result = result + item.value
+        result = result + ']'
+        return result
 
 
 class FploInputParser(object):
@@ -309,11 +314,10 @@ class FploInputParser(object):
                 self.statement = self.statement.parent.parent
             elif isinstance(this_token, token_subscript_begin):
                 newsubscript = subscript(self.statement)
-                newsubscript.append(statement(newsubscript))
                 self.statement.append(newsubscript)
-                self.statement = newsubscript.items[0]
+                self.statement = newsubscript
             elif isinstance(this_token, token_subscript_end):
-                self.statement = self.statement.parent.parent
+                self.statement = self.statement.parent
             elif isinstance(this_token, token_statement_end):
                 self.statement.parent.append(statement(self.statement.parent))
                 self.statement = self.statement.parent.items[-1]
