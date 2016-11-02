@@ -295,6 +295,32 @@ class AST_shape(AST_node):
         return result
 
 
+class AST_value(AST_node):
+    pass
+
+
+class AST_value_primitive(AST_value):
+    # there is one child, a python literal
+    def indented_str(self, indent=''):
+        result = ANSI.BG_YELLOW + indent + ANSI.RESET + (
+            '%-20s %s\n' % (self.__class__.__name__, str(self.child[0])))
+        return result
+
+
+class AST_value_list(AST_value):
+    def indented_str(self, indent=''):
+        result = ANSI.BG_YELLOW + indent + ANSI.RESET + (
+            '%-20s %s\n' % (self.__class__.__name__, repr(self.child)))
+        return result
+
+
+class AST_assignment(AST_node):
+    # children:
+    # 0: target (type AST_declaration)
+    # 1: value (type AST_value)
+    pass
+
+
 class concrete_node(object):
     def __init__(self, parent):
         self.items = []
@@ -389,12 +415,66 @@ class concrete_statement(concrete_node):
                 raise RuntimeError('encountered subscript on non-declaration')
             result.set_shape(self.items[pos_in_statement].to_AST_shape())
             pos_in_statement = pos_in_statement + 1
-        if len(self.items) > pos_in_statement:
-            LOGGER.error("token following declaration: %s", str(self.items[pos_in_statement]))
-        # else:
-        #     LOGGER.error("token following declaration: None")
-        return result
+        if len(self.items) <= pos_in_statement:
+            # we are done, nothing more in statement
+            return result
+        if not (isinstance(self.items[pos_in_statement], token_operator) and
+                self.items[pos_in_statement].value == '='):
+            raise RuntimeError('unexpected item following declaration: %s' % (
+                repr(self.items[pos_in_statement])))
+        # we have an assignment
+        new_assignment = AST_assignment(result.name)
+        new_assignment.append(result)
+        pos_in_statement = pos_in_statement + 1
+        if len(self.items) <= pos_in_statement:
+            raise RuntimeError('missing values in assignment')
+        if len(self.items) > pos_in_statement + 1:
+            raise RuntimeError('too many values in assignment')
+        concrete_values = self.items[pos_in_statement]
+        if isinstance(concrete_values, token_literal):
+            new_value = AST_value_primitive()
+            new_value.append(concrete_values.value)
+            new_assignment.append(new_value)
+            return new_assignment
+        if isinstance(concrete_values, concrete_block):
+            new_value = AST_value_list()
+            new_value.child = concrete_values.python_value()
+            new_assignment.append(new_value)
+            return new_assignment
+        return new_assignment
 
+    def python_value(self):
+        def eval_accumulated(items):
+            if len(items) == 1:
+                return items[0]
+            elif len(items) == 3 and items[1] == '/':
+                return items[0] / items[2]
+            else:
+                LOGGER.error('concrete_statement.python_value:accum: %s', str(items))
+                sys.stderr.write(self.indented_dump(''))
+
+        result = []
+        accum = []
+        for item in self.items:
+            if isinstance(item, token_literal):
+                accum.append(item.value)
+            elif isinstance(item, token_operator) and item.value == ',':
+                if len(accum) > 0:
+                    result.append(eval_accumulated(accum))
+                accum = []
+            elif isinstance(item, token_operator) and item.value == '/':
+                # FPLO input contains fraction constants
+                accum.append('/')
+            elif isinstance(item, concrete_block):
+                result.append(item.python_value())
+            else:
+                LOGGER.error('concrete_statement.python_value:item: %s', repr(item))
+        if len(accum) > 0:
+            result.append(eval_accumulated(accum))
+        # sys.stderr.write('IN concrete_statement.python_value\n')
+        # sys.stderr.write(self.indented_dump(''))
+        # raise Exception('stop here')
+        return result
 
 class concrete_block(concrete_node):
     def nomadmetainfo(self, prefix, indent):
@@ -414,6 +494,12 @@ class concrete_block(concrete_node):
         if len(result) is not None:
             return result
         return None
+
+    def python_value(self):
+        if len(self.items) != 1:
+            raise RuntimeError('python_value for block containing !=1 statement')
+        return self.items[0].python_value()
+
 
 class concrete_subscript(concrete_statement):
     def __str__(self):
