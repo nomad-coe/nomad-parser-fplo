@@ -205,6 +205,84 @@ token_bad_input.highlight_start = ANSI.BEGIN_INVERT + ANSI.FG_BRIGHT_RED
 token_flag_value.highlight_start = ANSI.FG_MAGENTA
 
 
+class AST_node(dict):
+    """base class for abstract syntax tree nodes"""
+    def __init__(self, name=None):
+        self.name = name
+        self.child = []
+
+    def indented_str(self, indent=''):
+        result = ANSI.BG_YELLOW + indent + ANSI.RESET + ('%-20s' % (self.__class__.__name__))
+        if self.name is not None:
+            result = result + ' ' + self.name
+        result = result + '\n'
+        child_indent = indent + '  '
+        for child in self.child:
+            if child is not None:
+                result = result + child.indented_str(child_indent)
+        return result
+
+    def append(self, newchild):
+        self.child.append(newchild)
+
+    def __len__(self):
+        return len(self.child)
+
+
+class AST_block(AST_node):
+    """generic block (sequence of statements) in AST"""
+    def append_block(self, src_block):
+        for src_child in src_block.child:
+            self.append(src_child)
+
+
+class AST_section(AST_block):
+    """section block (sequence of statements) in AST"""
+    pass
+
+
+class AST_datatype(AST_node):
+    pass
+
+
+class AST_datatype_primitive(AST_datatype):
+    pass
+
+
+class AST_datatype_struct(AST_datatype):
+    def __init__(self, name=None):
+        AST_datatype.__init__(self, name='struct')
+
+    def append_block(self, src_block):
+        for src_child in src_block.child:
+            self.append(src_child)
+
+
+class AST_declaration(AST_node):
+    """variable declaration in abstract syntax tree"""
+    # children:
+    #   0 - shape
+    #   1 - datatype
+    def __init__(self, name, datatype, shape=None):
+        AST_node.__init__(self, name)
+        self.child.append(shape)
+        self.child.append(datatype)
+
+    def set_shape(self, shape):
+        if self.child[0] is not None:
+            raise RuntimeError('already has shape: %s', self.name)
+        self.child[0] = shape
+
+
+class AST_shape(AST_node):
+    # children are ints without indented_str method
+    def indented_str(self, indent=''):
+        result = ANSI.BG_YELLOW + indent + ANSI.RESET + ('%-20s [' % (self.__class__.__name__))
+        result = result + ', '.join(map(str, self.child))
+        result = result + ']\n'
+        return result
+
+
 class concrete_node(object):
     def __init__(self, parent):
         self.items = []
@@ -262,6 +340,48 @@ class concrete_statement(concrete_node):
         else:
             LOGGER.error("no idea what to do with statement starting with %s", str(self.items[0]))
 
+    def to_AST(self):
+        if len(self.items) < 1:
+            return None
+        result = None
+        end_of_declaration = 0
+        # check declarations
+        if isinstance(self.items[0], token_keyword):
+            if self.items[0].value == 'section':
+                result = AST_section(self.items[1].value) # name of section
+                result.append_block(self.items[2].to_AST()) # section-block
+                end_of_declaration = 2
+            if self.items[0].value == 'struct':
+                struct = AST_datatype_struct()
+                struct.append_block(self.items[1].to_AST())
+                result = AST_declaration(self.items[2].value, struct)
+                end_of_declaration = 2
+        elif isinstance(self.items[0], token_datatype):
+            primtype = AST_datatype_primitive(self.items[0].value)
+            if primtype.name == 'char' and isinstance(self.items[1], concrete_subscript):
+                # ignore char length for now
+                #   not correct in C, but all declared chars in FPLO input
+                #   are char arrays
+                declaration_name = self.items[2].value
+                end_of_declaration = 2
+            else:
+                declaration_name = self.items[1].value
+                end_of_declaration = 1
+            result = AST_declaration(declaration_name, primtype)
+        if (
+                (len(self.items)-1 > end_of_declaration) and
+                isinstance(self.items[end_of_declaration+1], concrete_subscript)
+            ):
+            # subscript in LHS declares shape
+            if not isinstance(result, AST_declaration):
+                raise RuntimeError('encountered subscript on non-declaration')
+            end_of_declaration = end_of_declaration + 1
+            result.set_shape(self.items[end_of_declaration].to_AST_shape())
+        if len(self.items)-1 > end_of_declaration:
+            LOGGER.error("token following declaration: %s", str(self.items[end_of_declaration+1]))
+        # else:
+        #     LOGGER.error("token following declaration: None")
+        return result
 
 
 class concrete_block(concrete_node):
@@ -271,6 +391,17 @@ class concrete_block(concrete_node):
         for item in self.items:
             item.nomadmetainfo(prefix, indent)
 
+    def to_AST(self):
+        if len(self.items) < 1:
+            return None
+        result = AST_block()
+        for item in self.items:
+            item_AST = item.to_AST()
+            if item_AST is not None:
+                result.append(item_AST)
+        if len(result) is not None:
+            return result
+        return None
 
 class concrete_subscript(concrete_statement):
     def __str__(self):
@@ -288,6 +419,22 @@ class concrete_subscript(concrete_statement):
             ']'
         )
         return "%10s %s" % (self.__class__.__name__, result)
+
+    def to_AST_shape(self):
+        result = AST_shape()
+        for item in self.items:
+            if isinstance(item, token_literal) and isinstance(item.value, int):
+                result.append(item.value)
+            elif isinstance(item, token_operator) and item.value == '*':
+                # denote variable-length dimension by -1
+                result.append(int(-1))
+            elif isinstance(item, token_identifier):
+                # TODO: check if length from identifier needs to be respected
+                # for now treat as variable-length
+                result.append(int(-1))
+            else:
+                raise Exception("unknown purpose of item in shape: %s" % (repr(item)))
+        return result
 
 
 class FploInputParser(object):
@@ -396,7 +543,11 @@ class FploInputParser(object):
         sys.stdout.flush()
         sys.stderr.flush()
         # sys.stderr.write(self.concrete_statements.indented_dump('')) # json.dumps(self.concrete_statements, sort_keys=True, indent=4, separators=(',', ': ')))
-        self.concrete_statements.nomadmetainfo('x_fplo_in','')
+        # self.concrete_statements.nomadmetainfo('x_fplo_in','')
+        AST = self.concrete_statements.to_AST()
+        sys.stderr.write('AST:\n')
+        sys.stderr.flush()
+        sys.stderr.write(AST.indented_str(''))
 
 if __name__ == "__main__":
     parser = FploInputParser(sys.argv[1], annotateFile=sys.stdout)
