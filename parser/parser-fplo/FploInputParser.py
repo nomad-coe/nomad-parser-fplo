@@ -37,7 +37,10 @@ class token(object):
         return None
 
     def __str__(self):
-        return "%10s %s" % (self.__class__.__name__, str(self.value))
+        return str(self.value)
+
+    def __repr__(self):
+        return "%10s %s" % (self.__class__.__name__, repr(self.value))
 
 
 class token_literal(token):
@@ -271,11 +274,20 @@ class concrete_block(concrete_node):
 
 class concrete_subscript(concrete_statement):
     def __str__(self):
-        result = '['
-        for item in self.items:
-            result = result + item.value
-        result = result + ']'
+        result = (
+            '[' +
+            ', '.join(map(lambda i: "'" + str(i) + "'", self.items)) +
+            ']'
+        )
         return result
+
+    def __repr__(self):
+        result = (
+            '[' +
+            ', '.join(map(lambda i: "'" + repr(i) + "'", self.items)) +
+            ']'
+        )
+        return "%10s %s" % (self.__class__.__name__, result)
 
 
 class FploInputParser(object):
