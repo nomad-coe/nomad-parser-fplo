@@ -356,18 +356,18 @@ class concrete_statement(concrete_node):
         if len(self.items) < 1:
             return None
         result = None
-        end_of_declaration = 0
+        pos_in_statement = 0
         # check declarations
         if isinstance(self.items[0], token_keyword):
             if self.items[0].value == 'section':
                 result = AST_section(self.items[1].value) # name of section
                 result.append_block(self.items[2].to_AST()) # section-block
-                end_of_declaration = 2
+                pos_in_statement = 3
             if self.items[0].value == 'struct':
                 struct = AST_datatype_struct()
                 struct.append_block(self.items[1].to_AST())
                 result = AST_declaration(self.items[2].value, struct)
-                end_of_declaration = 2
+                pos_in_statement = 3
         elif isinstance(self.items[0], token_datatype):
             primtype = AST_datatype_primitive(self.items[0].value)
             if primtype.name == 'char' and isinstance(self.items[1], concrete_subscript):
@@ -375,22 +375,22 @@ class concrete_statement(concrete_node):
                 #   not correct in C, but all declared chars in FPLO input
                 #   are char arrays
                 declaration_name = self.items[2].value
-                end_of_declaration = 2
+                pos_in_statement = 3
             else:
                 declaration_name = self.items[1].value
-                end_of_declaration = 1
+                pos_in_statement = 2
             result = AST_declaration(declaration_name, primtype)
         if (
-                (len(self.items)-1 > end_of_declaration) and
-                isinstance(self.items[end_of_declaration+1], concrete_subscript)
+                (len(self.items) > pos_in_statement) and
+                isinstance(self.items[pos_in_statement], concrete_subscript)
             ):
             # subscript in LHS declares shape
             if not isinstance(result, AST_declaration):
                 raise RuntimeError('encountered subscript on non-declaration')
-            end_of_declaration = end_of_declaration + 1
-            result.set_shape(self.items[end_of_declaration].to_AST_shape())
-        if len(self.items)-1 > end_of_declaration:
-            LOGGER.error("token following declaration: %s", str(self.items[end_of_declaration+1]))
+            result.set_shape(self.items[pos_in_statement].to_AST_shape())
+            pos_in_statement = pos_in_statement + 1
+        if len(self.items) > pos_in_statement:
+            LOGGER.error("token following declaration: %s", str(self.items[pos_in_statement]))
         # else:
         #     LOGGER.error("token following declaration: None")
         return result
