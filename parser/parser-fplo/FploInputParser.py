@@ -88,13 +88,12 @@ class token_datatype(token):
     subtype_dict = {}
 
     def match2value(self):
-        value = self.subtype_dict.get(self.match.group(1), None)
-        if value is None:
+        value_index = self.subtype_dict.get(self.match.group(1), None)
+        if value_index is None:
             raise TokenMatchError
+        self.value_index = value_index
+        value = self.subtype_list[value_index]
         return value
-
-    def __str__(self):
-        return "%10s %s" % (self.__class__.__name__, str(self.subtype_list[self.value]))
 
 token_datatype.subtype_list = [
         'char',
@@ -113,13 +112,12 @@ class token_keyword(token):
     subtype_dict = {}
 
     def match2value(self):
-        value = self.subtype_dict.get(self.match.group(1), None)
-        if value is None:
+        value_index = self.subtype_dict.get(self.match.group(1), None)
+        if value_index is None:
             raise TokenMatchError
+        self.value_index = value_index
+        value = self.subtype_list[value_index]
         return value
-
-    def __str__(self):
-        return "%10s %s" % (self.__class__.__name__, str(self.subtype_list[self.value]))
 
 token_keyword.subtype_list = [
         'section',
@@ -227,13 +225,16 @@ class concrete_node(object):
     def nomadmetainfo(self, prefix):
         pass
 
+    def to_AST(self):
+        raise Exception("unimplemented to_AST in %s" % (self.__class__.__name__))
+
 
 class concrete_statement(concrete_node):
     def nomadmetainfo(self, prefix, indent):
         if len(self.items) < 1:
             return None
         if isinstance(self.items[0], token_keyword):
-            if self.items[0].value == 0:
+            if self.items[0].value == 'section':
                 # section
                 secname = prefix + '.' + self.items[1].value
                 sys.stderr.write("%ssection %s\n" % (indent, secname))
@@ -241,7 +242,7 @@ class concrete_statement(concrete_node):
                     self.items[2].nomadmetainfo(secname, indent + '  ')
                 else:
                     raise Exception("No block for %s" % (indent + '  '))
-            elif self.items[0].value == 1:
+            elif self.items[0].value == 'struct':
                 structname = prefix + '.' + self.items[2].value
                 if len(self.items) > 3 and isinstance(self.items[3], concrete_subscript):
                     struct_subscript = str(self.items[3])
@@ -254,7 +255,7 @@ class concrete_statement(concrete_node):
                 else:
                     sys.stderr.write("%s NOBLOCK" % (indent + '  '))
         elif isinstance(self.items[0], token_datatype):
-            sys.stderr.write("%s%s\n" % (indent + '  ', self.items[0].subtype_list[self.items[0].value]))
+            sys.stderr.write("%s%s\n" % (indent + '  ', self.items[0].value))
         else:
             LOGGER.error("no idea what to do with statement starting with %s", str(self.items[0]))
 
