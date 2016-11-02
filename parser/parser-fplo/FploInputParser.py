@@ -1,4 +1,16 @@
 #!/usr/bin/env python
+"""FPLO uses C-inspired input files. They are not quite C, so no conventional
+C parser library can be used.
+Among the more complex features are nested structs, as well
+as arrays-of-struct.
+
+This module is implemented as follows:
+1) tokenizer for the used C subset/dialect
+2) transformation of tokenized output to concrete syntax tree
+3) transformation of concrete syntax tree to abstract syntax tree (AST)
+TODO:
+4) transform AST to metaInfo backend calls
+"""
 import setup_paths
 import re
 import sys
