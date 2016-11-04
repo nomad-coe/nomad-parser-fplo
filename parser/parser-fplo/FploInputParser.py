@@ -647,14 +647,35 @@ class FploInputParser(object):
 
     def onEnd_of_file(self):
         """hook: called at the end of parsing"""
-        sys.stdout.flush()
-        sys.stderr.flush()
-        # sys.stderr.write(self.concrete_statements.indented_dump('')) # json.dumps(self.concrete_statements, sort_keys=True, indent=4, separators=(',', ': ')))
-        AST = self.concrete_statements.to_AST()
-        sys.stderr.write('AST:\n')
-        sys.stderr.flush()
-        sys.stderr.write(AST.indented_str(''))
+        self.AST = self.concrete_statements.to_AST()
 
 if __name__ == "__main__":
-    parser = FploInputParser(sys.argv[1], annotateFile=sys.stdout)
-    parser.parse()
+    import argparse
+    ARGPARSER = argparse.ArgumentParser(description='NOMAD parser for FPLO input')
+    ARGPARSER.add_argument('--annotate', action='store_true', default=False,
+                           help='write annotated/tokenized input files to stderr')
+    ARGPARSER.add_argument('--dump_concrete', action='store_true', default=False,
+                           help='write annotated/tokenized input files to stderr')
+    ARGPARSER.add_argument('--dump_ast', action='store_true', default=False,
+                           help='write annotated/tokenized input files to stderr')
+    ARGPARSER.add_argument('fplo_input', type=str, nargs='+', help='FPLO input files')
+    ARGS = ARGPARSER.parse_args()
+    if ARGS.annotate:
+        ANNOTATEFILE = sys.stderr
+    else:
+        ANNOTATEFILE = None
+    for fplo_in in ARGS.fplo_input:
+        parser = FploInputParser(fplo_in, annotateFile=ANNOTATEFILE)
+        parser.parse()
+        sys.stdout.flush()
+        sys.stderr.flush()
+        if ARGS.dump_concrete:
+            sys.stderr.write('concrete syntax tree:\n')
+            sys.stderr.write(parser.concrete_statements.indented_dump('  '))
+            sys.stdout.flush()
+            sys.stderr.flush()
+        if ARGS.dump_ast:
+            sys.stderr.write('abstract syntax tree:\n')
+            sys.stderr.write(parser.AST.indented_str('  '))
+            sys.stdout.flush()
+            sys.stderr.flush()
