@@ -266,6 +266,9 @@ class AST_datatype_struct(AST_datatype):
         for src_child in src_block.child:
             self.append(src_child)
 
+class AST_datatype_flag(AST_datatype_struct):
+    pass
+
 
 class AST_declaration(AST_node):
     """variable declaration in abstract syntax tree"""
@@ -391,6 +394,17 @@ class concrete_statement(concrete_node):
                 struct.append_block(self.items[1].to_AST())
                 result = AST_declaration(self.items[2].value, struct)
                 pos_in_statement = 3
+        elif isinstance(self.items[0], token_datatype) and self.items[0].value == 'flag':
+            # special case for non-C-primtype 'flag'
+            #   we will map this to struct of logicals, but need to evaluate
+            #   RHS to get the names. messy.
+            flag = AST_datatype_flag()
+            result = AST_declaration(self.items[1].value, flag)
+            if isinstance(self.items[2], concrete_subscript):
+                # skip array shape
+                pos_in_statement = 3
+            else:
+                pos_in_statement = 2
         elif isinstance(self.items[0], token_datatype):
             primtype = AST_datatype_primitive(self.items[0].value)
             if primtype.name == 'char' and isinstance(self.items[1], concrete_subscript):
@@ -435,9 +449,16 @@ class concrete_statement(concrete_node):
             return new_assignment
         if isinstance(concrete_values, concrete_block):
             new_value = AST_value_list()
-            new_value.child = concrete_values.python_value()
+            if isinstance(result.child[1], AST_datatype_flag):
+                # special case for 'flag' datatype, need to evaluate RHS for names
+                (flag_names, flag_values) = concrete_values.flag_names_values()
+                for flag_name in flag_names:
+                    result.child[1].append(AST_declaration(flag_name, AST_datatype_primitive('logical')))
+                for flag_value in flag_values:
+                    new_value.append(flag_value)
+            else:
+                new_value.child = concrete_values.python_value()
             new_assignment.append(new_value)
-            return new_assignment
         return new_assignment
 
     def python_value(self):
@@ -473,6 +494,28 @@ class concrete_statement(concrete_node):
         # raise Exception('stop here')
         return result
 
+    def flag_names_values(self):
+        result_names = []
+        result_values = []
+        accum = []
+        for item in self.items:
+            if isinstance(item, (token_identifier, token_flag_value)):
+                accum.append(item.value)
+            elif isinstance(item, token_operator) and item.value == ',':
+                if len(accum)!=2:
+                    raise RuntimeError('flag_names_values encountered non-pair: ', str(accum))
+                result_names.append(accum[0])
+                result_values.append(accum[1])
+                accum=[]
+            else:
+                raise RuntimeError('flag_names_values encountered unhandled item: ' + repr(item))
+        if len(accum) > 0:
+            if len(accum)!=2:
+                raise RuntimeError('flag_names_values encountered non-pair: ', str(accum))
+            result_names.append(accum[0])
+            result_values.append(accum[1])
+        return (result_names, result_values)
+
 class concrete_block(concrete_node):
     def nomadmetainfo(self, prefix, indent):
         if len(self.items) < 1:
@@ -496,6 +539,11 @@ class concrete_block(concrete_node):
         if len(self.items) != 1:
             raise RuntimeError('python_value for block containing !=1 statement')
         return self.items[0].python_value()
+
+    def flag_names_values(self):
+        if len(self.items) != 1:
+            raise RuntimeError('flag_names for block containing !=1 statement')
+        return self.items[0].flag_names_values()
 
 
 class concrete_subscript(concrete_statement):
