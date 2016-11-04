@@ -504,16 +504,18 @@ class concrete_statement(concrete_node):
             elif isinstance(item, token_operator) and item.value == ',':
                 if len(accum)!=2:
                     raise RuntimeError('flag_names_values encountered non-pair: ', str(accum))
-                result_names.append(accum[0])
-                result_values.append(accum[1])
+                if accum[0] != 'NOT_USED':
+                    result_names.append(accum[0])
+                    result_values.append(accum[1])
                 accum=[]
             else:
                 raise RuntimeError('flag_names_values encountered unhandled item: ' + repr(item))
         if len(accum) > 0:
             if len(accum)!=2:
                 raise RuntimeError('flag_names_values encountered non-pair: ', str(accum))
-            result_names.append(accum[0])
-            result_values.append(accum[1])
+            if accum[0] != 'NOT_USED':
+                result_names.append(accum[0])
+                result_values.append(accum[1])
         return (result_names, result_values)
 
 class concrete_block(concrete_node):
