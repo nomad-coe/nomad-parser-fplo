@@ -34,15 +34,19 @@ class token(object):
 
     def __init__(self, line, pos_in_line):
         """token constructor takes re.match object as arg"""
-        self.match = self.regex.match(line, pos_in_line)
-        if self.match is None:
+        match = self.regex.match(line, pos_in_line)
+        if match is None:
             raise TokenMatchError
+        self._match = match
         self.value = self.match2value()
 
     def highlighted(self):
         """return ANSI-highlighted token"""
-        m = self.cRE_end_newline.match(self.match.group(0))
+        m = self.cRE_end_newline.match(self._match.group(0))
         return self.highlight_start + m.group(1) + self.highlight_end + m.group(2)
+
+    def match_end(self):
+        return self._match.end()
 
     def match2value(self):
         return None
@@ -75,7 +79,7 @@ class token_literal(token):
     )
 
     def match2value(self):
-        match = self.match
+        match = self._match
         if match.group('str_d') is not None:
             return match.group('str_d')
         if match.group('str_s') is not None:
@@ -102,7 +106,7 @@ class token_datatype(token):
     subtype_dict = {}
 
     def match2value(self):
-        value_index = self.subtype_dict.get(self.match.group(1), None)
+        value_index = self.subtype_dict.get(self._match.group(1), None)
         if value_index is None:
             raise TokenMatchError
         self.value_index = value_index
@@ -126,7 +130,7 @@ class token_keyword(token):
     subtype_dict = {}
 
     def match2value(self):
-        value_index = self.subtype_dict.get(self.match.group(1), None)
+        value_index = self.subtype_dict.get(self._match.group(1), None)
         if value_index is None:
             raise TokenMatchError
         self.value_index = value_index
@@ -145,7 +149,7 @@ class token_identifier(token):
     regex = re.compile(r'\s*([a-zA-Z_][a-zA-Z0-9_]*)')
 
     def match2value(self):
-        return self.match.group(1)
+        return self._match.group(1)
 
 
 class token_subscript_begin(token):
@@ -160,7 +164,7 @@ class token_operator(token):
     regex = re.compile(r'\s*(\+=|\-=|=|,|-|\+|/|\*)')
 
     def match2value(self):
-        return self.match.group(1)
+        return self._match.group(1)
 
 
 class token_block_begin(token):
@@ -179,7 +183,7 @@ class token_line_comment(token):
     regex = re.compile(r'\s*(?:(//|#)|(/\*))(?P<comment>.*)')
 
     def match2value(self):
-        return self.match.group('comment')
+        return self._match.group('comment')
 
 class token_trailing_whitespace(token):
     regex = re.compile(r'\s+$')
@@ -188,13 +192,13 @@ class token_bad_input(token):
     regex = re.compile('(.+)$')
 
     def match2value(self):
-        return self.match.group(1)
+        return self._match.group(1)
 
 class token_flag_value(token):
     regex = re.compile(r'\(([+-])\)')
 
     def match2value(self):
-        if self.match.group(1) == '+':
+        if self._match.group(1) == '+':
             return True
         else:
             return False
@@ -638,7 +642,7 @@ class FploInputParser(object):
             self.current_concrete_statement.append(this_token)
         else:
             raise Exception("Unhandled token type " + this_token.__class__.__name__)
-        return this_token.match.end()
+        return this_token.match_end()
 
     def onBad_input(self):
         """hook: called at the end of parsing if there was any bad input"""
