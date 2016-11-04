@@ -37,12 +37,11 @@ class token(object):
         self.match = self.regex.match(line, pos_in_line)
         if self.match is None:
             raise TokenMatchError
-        self.value_str = self.match.group(0)
         self.value = self.match2value()
 
     def highlighted(self):
         """return ANSI-highlighted token"""
-        m = self.cRE_end_newline.match(self.value_str)
+        m = self.cRE_end_newline.match(self.match.group(0))
         return self.highlight_start + m.group(1) + self.highlight_end + m.group(2)
 
     def match2value(self):
