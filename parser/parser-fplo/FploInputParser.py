@@ -262,9 +262,6 @@ class AST_datatype_primitive(AST_datatype):
 
 
 class AST_datatype_struct(AST_datatype):
-    def __init__(self, name=None):
-        AST_datatype.__init__(self, name='struct')
-
     def append_block(self, src_block):
         for src_child in src_block.child:
             self.append(src_child)
@@ -423,7 +420,7 @@ class concrete_statement(concrete_node):
             raise RuntimeError('unexpected item following declaration: %s' % (
                 repr(self.items[pos_in_statement])))
         # we have an assignment
-        new_assignment = AST_assignment(result.name)
+        new_assignment = AST_assignment()
         new_assignment.append(result)
         pos_in_statement = pos_in_statement + 1
         if len(self.items) <= pos_in_statement:
