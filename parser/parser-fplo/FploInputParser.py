@@ -283,7 +283,15 @@ class AST_datatype(AST_node):
 
 
 class AST_datatype_primitive(AST_datatype):
-    pass
+    dtype2nomad = {
+        'char': 'C',
+        'int': 'i',
+        'real': 'f',
+        'logical': 'b',
+    }
+
+    def nomad_dtypeStr(self):
+        return self.dtype2nomad[self.name]
 
 
 class AST_datatype_struct(AST_datatype):
