@@ -243,6 +243,15 @@ class AST_node(dict):
     def __len__(self):
         return len(self.child)
 
+    def declaration_nomadmetainfo(self, output_file, namespace):
+        if self.name is not None:
+            child_namespace = namespace + '.' + self.name
+        else:
+            child_namespace = namespace
+        for child in self.child:
+            if isinstance(child, AST_node):
+                child.declaration_nomadmetainfo(output_file, child_namespace)
+
 
 class AST_block(AST_node):
     """generic block (sequence of statements) in AST"""
