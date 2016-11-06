@@ -290,11 +290,11 @@ class AST_section(AST_block):
         thisname = namespace + '.' + self.name
         output_file.write((
             ', {\n' +
-            '    "description": "FPLO input section %s",\n' +
-            '    "name": "%s",\n' +
-            '    "kindStr": "type_section",\n' +
-            '    "superNames": [ "%s" ]\n' +
-            '}') % (thisname, thisname, namespace))
+            '      "description": "FPLO input section %s",\n' +
+            '      "name": "%s",\n' +
+            '      "kindStr": "type_section",\n' +
+            '      "superNames": [ "%s" ]\n' +
+            '    }') % (thisname, thisname, namespace))
         AST_block.declaration_nomadmetainfo(self, output_file, namespace)
 
 
@@ -353,21 +353,21 @@ class AST_declaration(AST_node):
         dtypeStr = self.child[1].nomad_dtypeStr()
         output_file.write((
             ', {\n' +
-            '    "description": "FPLO input %s",\n' +
-            '    "name": "%s",\n' +
-            '    "superNames": [ "%s" ]\n'
+            '      "description": "FPLO input %s",\n' +
+            '      "name": "%s",\n' +
+            '      "superNames": [ "%s" ],\n'
             ) % (thisname, thisname, namespace))
         if kindStr is not None:
-            output_file.write('    "kindStr": "%s"\n' % (kindStr))
+            output_file.write('      "kindStr": "%s"\n' % (kindStr))
         elif dtypeStr is not None:
-            output_file.write('    "dtypeStr": "%s"\n' % (dtypeStr))
+            output_file.write('      "dtypeStr": "%s"\n' % (dtypeStr))
         else:
             raise RuntimeError(
                 "neither kindStr nor dtypeStr are defined for %s" % (
                     thisname
                )
             )
-        output_file.write('}')
+        output_file.write('    }')
         AST_node.declaration_nomadmetainfo(self, output_file, namespace)
 
 
