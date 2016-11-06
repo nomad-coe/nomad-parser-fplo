@@ -260,6 +260,10 @@ class AST_block(AST_node):
             self.append(src_child)
 
 
+class AST_root(AST_block):
+    pass
+
+
 class AST_section(AST_block):
     """section block (sequence of statements) in AST"""
     def declaration_nomadmetainfo(self, output_file, namespace):
@@ -568,6 +572,20 @@ class concrete_block(concrete_node):
         return self.items[0].flag_names_values()
 
 
+class concrete_root(concrete_block):
+    def to_AST(self):
+        if len(self.items) < 1:
+            return None
+        result = AST_root()
+        for item in self.items:
+            item_AST = item.to_AST()
+            if item_AST is not None:
+                result.append(item_AST)
+        if len(result) is not None:
+            return result
+        return None
+
+
 class concrete_subscript(concrete_statement):
     def __str__(self):
         result = (
@@ -612,7 +630,7 @@ class FploInputParser(object):
         self.__annotateFile = annotateFile
         self.bad_input = False
         # start with root block, and add empty statement to append to
-        self.concrete_statements = concrete_block(None)
+        self.concrete_statements = concrete_root(None)
         self.concrete_statements.append(concrete_statement(self.concrete_statements))
         self.current_concrete_statement = self.concrete_statements.items[-1]
 
