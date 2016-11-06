@@ -262,7 +262,16 @@ class AST_block(AST_node):
 
 class AST_section(AST_block):
     """section block (sequence of statements) in AST"""
-    pass
+    def declaration_nomadmetainfo(self, output_file, namespace):
+        thisname = namespace + '.' + self.name
+        output_file.write((
+            ', {\n' +
+            '    "description": "FPLO input section %s",\n' +
+            '    "name": "%s",\n' +
+            '    "kindStr": "type_section",\n' +
+            '    "superNames": [ "%s" ]\n' +
+            '}') % (thisname, thisname, namespace))
+        AST_block.declaration_nomadmetainfo(self, output_file, namespace)
 
 
 class AST_datatype(AST_node):
