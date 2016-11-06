@@ -299,8 +299,13 @@ class AST_datatype_struct(AST_datatype):
         for src_child in src_block.child:
             self.append(src_child)
 
+    def nomad_kindStr(self):
+        return 'type_section'
+
+
 class AST_datatype_flag(AST_datatype_struct):
-    pass
+    def nomad_kindStr(self):
+        return 'type_section'
 
 
 class AST_declaration(AST_node):
