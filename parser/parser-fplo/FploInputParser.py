@@ -460,9 +460,6 @@ class concrete_statement(concrete_node):
                 LOGGER.error('concrete_statement.python_value:item: %s', repr(item))
         if len(accum) > 0:
             result.append(eval_accumulated(accum))
-        # sys.stderr.write('IN concrete_statement.python_value\n')
-        # sys.stderr.write(self.indented_dump(''))
-        # raise Exception('stop here')
         return result
 
     def flag_names_values(self):
@@ -613,7 +610,6 @@ class FploInputParser(object):
                 line[pos_in_line:]))
             return None
         self._annotate(this_token.highlighted())
-        # LOGGER.error('cls: %s', this_token.__class__.__name__)
         if isinstance(this_token, token_block_begin):
             newblock = concrete_block(self.current_concrete_statement)
             newblock.append(concrete_statement(newblock))
