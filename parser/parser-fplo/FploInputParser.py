@@ -275,7 +275,11 @@ class AST_section(AST_block):
 
 
 class AST_datatype(AST_node):
-    pass
+    def nomad_kindStr(self):
+        return None
+
+    def nomad_dtypeStr(self):
+        return None
 
 
 class AST_datatype_primitive(AST_datatype):
