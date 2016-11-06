@@ -666,6 +666,8 @@ if __name__ == "__main__":
                            help='write annotated/tokenized input files to stderr')
     ARGPARSER.add_argument('--dump_ast', action='store_true', default=False,
                            help='write annotated/tokenized input files to stderr')
+    ARGPARSER.add_argument('--metainfo', action='store_true', default=False,
+                           help='write nomadmetainfo to stdout')
     ARGPARSER.add_argument('fplo_input', type=str, nargs='+', help='FPLO input files')
     ARGS = ARGPARSER.parse_args()
     if ARGS.annotate:
@@ -687,3 +689,5 @@ if __name__ == "__main__":
             sys.stderr.write(parser.AST.indented_str('  '))
             sys.stdout.flush()
             sys.stderr.flush()
+        if ARGS.metainfo:
+            parser.AST.declaration_nomadmetainfo(sys.stdout, 'x_fplo_in')
