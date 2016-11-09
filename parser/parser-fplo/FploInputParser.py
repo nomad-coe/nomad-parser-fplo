@@ -655,6 +655,7 @@ class FploInputParser(object):
         self.concrete_statements = concrete_root(None)
         self.concrete_statements.append(concrete_statement(self.concrete_statements))
         self.current_concrete_statement = self.concrete_statements.items[-1]
+        self.annotated_line = ''
 
     def parse(self):
         """open file and parse line-by-line"""
@@ -682,8 +683,11 @@ class FploInputParser(object):
 
     def _annotate(self, what):
         """write string to annotateFile if present"""
-        if self.__annotateFile:
-            self.__annotateFile.write(what)
+        self.annotated_line = self.annotated_line + what
+        if self.annotated_line[-1] == '\n':
+            if self.__annotateFile:
+                self.__annotateFile.write(self.annotated_line)
+            self.annotated_line = ''
 
     def state_root(self, line, pos_in_line):
         """state: no open section, i.e. at the root of the namelist"""
