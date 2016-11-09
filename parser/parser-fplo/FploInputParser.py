@@ -357,6 +357,8 @@ class AST_declaration(AST_node):
             '      "name": "%s",\n' +
             '      "superNames": [ "%s" ],\n'
             ) % (thisname, thisname, namespace))
+        if self.child[0] is not None:
+            output_file.write('      "repeats": true,\n')
         if kindStr is not None:
             output_file.write('      "kindStr": "%s"\n' % (kindStr))
         elif dtypeStr is not None:
