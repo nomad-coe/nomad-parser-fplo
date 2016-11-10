@@ -201,7 +201,12 @@ class ParserFplo14(object):
                    ),
                    SM(name='startEchoInput',
                       startReStr=r"\s*Start: content of =.in\s*$",
-                      adHoc=self.adHoc_input_content
+                      subMatchers=[
+                          SM(name='startEchoInputDelimiter',
+                             startReStr=r'^\s*-{60,}\s*$',
+                             adHoc=self.adHoc_input_content,
+                          ),
+                      ],
                    ),
                ] + self.SMs_sym_msg() + [
                ],
