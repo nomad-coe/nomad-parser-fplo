@@ -39,6 +39,7 @@ class token(object):
             raise TokenMatchError
         self._match = match
         self.value = self.match2value()
+        self.source_line = line
 
     def highlighted(self):
         """return ANSI-highlighted token"""
@@ -409,8 +410,9 @@ class AST_assignment(AST_node):
 
 
 class concrete_node(object):
-    def __init__(self, parent):
+    def __init__(self, parent, source_line):
         self.items = []
+        self.source_line = source_line
         # backref
         self.parent = parent
 
@@ -486,8 +488,8 @@ class concrete_statement(concrete_node):
             return result
         if not (isinstance(self.items[pos_in_statement], token_operator) and
                 self.items[pos_in_statement].value == '='):
-            raise RuntimeError('unexpected item following declaration: %s' % (
-                repr(self.items[pos_in_statement])))
+            raise RuntimeError('unexpected item following declaration: "%s", line: "%s"' % (
+                repr(self.items[pos_in_statement]), self.items[pos_in_statement].source_line))
         # we have an assignment
         new_assignment = AST_assignment()
         new_assignment.append(result)
@@ -652,8 +654,8 @@ class FploInputParser(object):
         self.__annotateFile = annotateFile
         self.bad_input = False
         # start with root block, and add empty statement to append to
-        self.concrete_statements = concrete_root(None)
-        self.concrete_statements.append(concrete_statement(self.concrete_statements))
+        self.concrete_statements = concrete_root(None, '')
+        self.concrete_statements.append(concrete_statement(self.concrete_statements, ''))
         self.current_concrete_statement = self.concrete_statements.items[-1]
         self.annotated_line = ''
 
@@ -713,20 +715,20 @@ class FploInputParser(object):
             return None
         self._annotate(this_token.highlighted())
         if isinstance(this_token, token_block_begin):
-            newblock = concrete_block(self.current_concrete_statement)
-            newblock.append(concrete_statement(newblock))
+            newblock = concrete_block(self.current_concrete_statement, line)
+            newblock.append(concrete_statement(newblock, line))
             self.current_concrete_statement.append(newblock)
             self.current_concrete_statement = newblock.items[0]
         elif isinstance(this_token, token_block_end):
             self.current_concrete_statement = self.current_concrete_statement.parent.parent
         elif isinstance(this_token, token_subscript_begin):
-            newsubscript = concrete_subscript(self.current_concrete_statement)
+            newsubscript = concrete_subscript(self.current_concrete_statement, line)
             self.current_concrete_statement.append(newsubscript)
             self.current_concrete_statement = newsubscript
         elif isinstance(this_token, token_subscript_end):
             self.current_concrete_statement = self.current_concrete_statement.parent
         elif isinstance(this_token, token_statement_end):
-            self.current_concrete_statement.parent.append(concrete_statement(self.current_concrete_statement.parent))
+            self.current_concrete_statement.parent.append(concrete_statement(self.current_concrete_statement.parent, line))
             self.current_concrete_statement = self.current_concrete_statement.parent.items[-1]
         elif isinstance(this_token, token_bad_input):
             self.bad_input = True
