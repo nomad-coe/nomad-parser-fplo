@@ -647,7 +647,8 @@ class concrete_subscript(concrete_statement):
 class FploInputParser(object):
     """Parser for C-like FPLO input
     """
-    def __init__(self, file_path, annotateFile = None):
+    def __init__(self, file_path, annotateFile = None,
+                 annotated_line_callback = None):
         self.input_tree = {}
         self.file_path = file_path
         self.state = self.state_root
@@ -658,6 +659,7 @@ class FploInputParser(object):
         self.concrete_statements.append(concrete_statement(self.concrete_statements, ''))
         self.current_concrete_statement = self.concrete_statements.items[-1]
         self.annotated_line = ''
+        self.annotated_line_callback = annotated_line_callback
 
     def parse(self):
         """open file and parse line-by-line"""
@@ -689,6 +691,8 @@ class FploInputParser(object):
         if self.annotated_line[-1] == '\n':
             if self.__annotateFile:
                 self.__annotateFile.write(self.annotated_line)
+            if self.annotated_line_callback is not None:
+                self.annotated_line_callback(self.annotated_line)
             self.annotated_line = ''
 
     def state_root(self, line, pos_in_line):
