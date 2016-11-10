@@ -15,6 +15,7 @@ import calendar
 from nomadcore.parser_backend import valueForStrValue
 from FploCommon import RE_f, RE_i, cRE_f, cRE_i
 from nomadcore.parser_backend import valueForStrValue
+import FploInputParser
 
 
 LOGGER = logging.getLogger(__name__)
@@ -184,6 +185,40 @@ class ParserFplo14(object):
 
     def adHoc_input_content(self, parser):
         LOGGER.error("TODO: parse C-like echoed input")
+        input_parser = FploInputParser.FploInputParser(
+            None,
+            annotated_line_callback=self.callback_annotated_input_line)
+        while True:
+            fInLine = parser.fIn.readline()
+            if re.match(r'^\s*-{60,}\s*$', fInLine):
+                self.callback_annotated_input_line(fInLine)
+                break
+            input_parser.parse_line(fInLine)
+        input_parser.onEnd_of_file()
+
+    def callback_annotated_input_line(self, annotated_input_line):
+        minfo = {
+            # raw line
+            'fInLine': '', # fInLine,
+            'fInLineNr': self.parser.fIn.lineNr,
+            # information about SimpleMatcher
+            'matcherName': 'tokenizer',
+            'defFile': 'FploInputParser.py',
+            'defLine': 0,
+            'matcher_does_nothing': False,
+            'which_re': 'tokenizer',
+            # classification of match
+            'matchFlags': 1,
+            'match': 3, # 0 - no, 1 - partial, 3 - full
+            'coverageIgnore': 0, # 0 - no, 1 - local, 3 - global
+            # overall span of match, and spans of group captures
+            'span': [],
+            # capture group names
+            'matcherGroup': [],
+            # we have pre-highlighted line
+            'highlighted': annotated_input_line,
+        }
+        self.parser.annotator.annotate(minfo)
 
     def SMs_input(self):
         result = [
