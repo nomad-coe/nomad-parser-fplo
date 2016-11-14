@@ -17,7 +17,10 @@ import sys
 import os
 import logging
 import json
+import FploCommon as FploC
 from nomadcore.match_highlighter import ANSI
+from nomadcore.parser_backend import JsonParseEventsWriterBackend
+from nomadcore.caching_backend import CachingLevel, ActiveBackend
 
 LOGGER = logging.getLogger(__name__)
 
@@ -253,6 +256,16 @@ class AST_node(dict):
             if isinstance(child, AST_node):
                 child.declaration_nomadmetainfo(output_file, child_namespace)
 
+    def data_nomadmetainfo(self, backend, namespace):
+        if self.name is not None:
+            child_namespace = namespace + '.' + self.name
+        else:
+            child_namespace = namespace
+        for child in self.child:
+            if isinstance(child, AST_node):
+                child.data_nomadmetainfo(backend, child_namespace)
+
+
 
 class AST_block(AST_node):
     """generic block (sequence of statements) in AST"""
@@ -283,6 +296,11 @@ class AST_root(AST_block):
             '  ]\n' +
             '}\n'
         )
+
+    def data_nomadmetainfo(self, backend, namespace):
+        gIndex = backend.openSection(namespace)
+        AST_node.data_nomadmetainfo(self, backend, namespace)
+        backend.closeSection(namespace, gIndex)
 
 
 class AST_section(AST_block):
@@ -769,6 +787,13 @@ if __name__ == "__main__":
                            help='write nomadmetainfo to stdout')
     ARGPARSER.add_argument('fplo_input', type=str, nargs='+', help='FPLO input files')
     ARGS = ARGPARSER.parse_args()
+
+    cachingLevelForMetaName = {}
+    for name in FploC.META_INFO.infoKinds:
+        # set all temporaries to caching-only
+        if name.startswith('x_fplo_t_'):
+            cachingLevelForMetaName[name] = CachingLevel.Cache
+
     if ARGS.annotate:
         ANNOTATEFILE = sys.stderr
     else:
@@ -790,3 +815,22 @@ if __name__ == "__main__":
             sys.stderr.flush()
         if ARGS.autogenerate_metainfo:
             parser.AST.declaration_nomadmetainfo(sys.stdout, 'x_fplo_in')
+        else:
+            outF = sys.stdout
+            jsonBackend = JsonParseEventsWriterBackend(FploC.META_INFO, outF)
+            sys.stderr.write('WTF2:' + str(FploC.META_INFO) + '\n')
+            backend = ActiveBackend.activeBackend(
+                metaInfoEnv = FploC.META_INFO,
+                cachingLevelForMetaName = cachingLevelForMetaName,
+                defaultDataCachingLevel = CachingLevel.ForwardAndCache,
+                defaultSectionCachingLevel = CachingLevel.Forward,
+                superBackend = jsonBackend)
+            outF.write("[")
+            backend.startedParsingSession('file://' + fplo_in, FploC.PARSER_INFO_DEFAULT)
+            run_gIndex = backend.openSection('section_run')
+            method_gIndex = backend.openSection('section_method')
+            parser.AST.data_nomadmetainfo(backend, 'x_fplo_in')
+            backend.closeSection('section_method', method_gIndex)
+            backend.closeSection('section_run', run_gIndex)
+            backend.finishedParsingSession("ParseSuccess", None)
+            outF.write("]")
