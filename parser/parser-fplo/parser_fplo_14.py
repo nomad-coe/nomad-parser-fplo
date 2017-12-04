@@ -627,6 +627,15 @@ class ParserFplo14(object):
             self, backend, gIndex, section):
         backend.addValue('single_configuration_calculation_to_system_ref', self.sectionIdx['system'])
         backend.addValue('single_configuration_to_calculation_method_ref', self.sectionIdx['method'])
+        scf_iter = self.section['scf_iteration']
+        backend.addValue(
+            'energy_total',
+            scf_iter['energy_total_scf_iteration'][-1]
+        )
+        backend.addArrayValues(
+            'energy_reference_fermi',
+            np.array(scf_iter['energy_reference_fermi_iteration'][-1])
+        )
 
     def initialize_values(self):
         """allows to reset values if the same superContext is used to parse
