@@ -47,8 +47,6 @@ FPLO_XC_FUNCTIONAL = {
         { 'XC_functional_name': 'LDA_C_PW' },
     ],
     'Perdew Burke Ernzerhof 96    (GGA)':  [
-        { 'XC_functional_name': 'LDA_X' },
-        { 'XC_functional_name': 'LDA_C_PW' },
         { 'XC_functional_name': 'GGA_X_PBE' },
         { 'XC_functional_name': 'GGA_C_PBE' },
     ],
