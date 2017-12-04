@@ -527,7 +527,7 @@ class ParserFplo14(object):
     def onClose_section_method(
             self, backend, gIndex, section):
         # check for DFT+U vs. DFT
-        if section['x_fplo_t_dft_plus_u_projection_type'] is None:
+        if section['x_fplo_dft_plus_u_projection_type'] is None:
             backend.addValue('electronic_structure_method', 'DFT')
         else:
             backend.addValue('electronic_structure_method', 'DFT+U')
