@@ -39,6 +39,10 @@ from nomadcore.caching_backend import CachingLevel, ActiveBackend
 LOGGER = logging.getLogger(__name__)
 
 
+def metaN(metaName):
+    """Retrurns a normalized meta name"""
+    return metaName.replace(".", "_").lower()
+
 class TokenMatchError(Exception):
     pass
 
@@ -272,7 +276,7 @@ class AST_node(dict):
 
     def data_nomadmetainfo(self, backend, namespace):
         if self.name is not None:
-            child_namespace = namespace + '.' + self.name
+            child_namespace = namespace + '_' + self.name
         else:
             child_namespace = namespace
         for child in self.child:
@@ -312,9 +316,9 @@ class AST_root(AST_block):
         )
 
     def data_nomadmetainfo(self, backend, namespace):
-        gIndex = backend.openSection(namespace)
+        gIndex = backend.openSection(metaN(namespace))
         AST_node.data_nomadmetainfo(self, backend, namespace)
-        backend.closeSection(namespace, gIndex)
+        backend.closeSection(metaN(namespace), gIndex)
 
 
 class AST_section(AST_block):

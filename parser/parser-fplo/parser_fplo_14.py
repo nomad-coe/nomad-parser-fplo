@@ -30,7 +30,7 @@ from nomadcore.parser_backend import valueForStrValue
 from FploCommon import RE_f, RE_i, cRE_f, cRE_i
 from nomadcore.parser_backend import valueForStrValue
 import FploInputParser
-
+from FploInputParser import metaN
 
 LOGGER = logging.getLogger(__name__)
 
@@ -46,23 +46,23 @@ FPLO_RELATIVISTIC = {
 # lookup table translating XC functional from fplo to NOMAD
 FPLO_XC_FUNCTIONAL = {
     'Exchange only                (LSDA)': [
-        { 'XC_functional_name': 'LDA_X' },
+        { 'xc_functional_name': 'LDA_X' },
     ],
     'von Barth Hedin              (LSDA)': [
-        { 'XC_functional_name': 'LDA_X' },
-        { 'XC_functional_name': 'LDA_C_VBH' },
+        { 'xc_functional_name': 'LDA_X' },
+        { 'xc_functional_name': 'LDA_C_VBH' },
     ],
     'Perdew and Zunger            (LSDA)': [
-        { 'XC_functional_name': 'LDA_X' },
-        { 'XC_functional_name': 'LDA_C_PZ' },
+        { 'xc_functional_name': 'LDA_X' },
+        { 'xc_functional_name': 'LDA_C_PZ' },
     ],
     'Perdew Wang 92               (LSDA)': [
-        { 'XC_functional_name': 'LDA_X' },
-        { 'XC_functional_name': 'LDA_C_PW' },
+        { 'xc_functional_name': 'LDA_X' },
+        { 'xc_functional_name': 'LDA_C_PW' },
     ],
     'Perdew Burke Ernzerhof 96    (GGA)':  [
-        { 'XC_functional_name': 'GGA_X_PBE' },
-        { 'XC_functional_name': 'GGA_C_PBE' },
+        { 'xc_functional_name': 'GGA_X_PBE' },
+        { 'xc_functional_name': 'GGA_C_PBE' },
     ],
 }
 
@@ -352,7 +352,7 @@ class ParserFplo14(object):
             SM(name='mXC',
                startReStr=r"\s*XC version :\s*(?P<x_fplo_xc_functional_number>\d+)\s*-\s*(?P<x_fplo_xc_functional>.*?)\s*$",
                adHoc=lambda p: self.addSectionDictList(
-                   p.backend, 'section_XC_functionals',
+                   p.backend, 'section_xc_functionals',
                    FPLO_XC_FUNCTIONAL[p.lastMatch['x_fplo_xc_functional']])
             ),
             SM(name='mLSDApU_stuff',
@@ -383,12 +383,12 @@ class ParserFplo14(object):
                                         r"\s*(?P<x_fplo_t_dft_plus_u_species_subshell_species>\d+)" +
                                         r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_element>\S+)" +
                                         r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_subshell>\S+)" +
-                                        r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_F0__eV>" + RE_f + r")" +
-                                        r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_F2__eV>" + RE_f + r")" +
-                                        r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_F4__eV>" + RE_f + r")" +
-                                        r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_F6__eV>" + RE_f + r")" +
-                                        r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_U__eV>" + RE_f + r")" +
-                                        r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_J__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_f0__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_f2__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_f4__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_f6__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_u__eV>" + RE_f + r")" +
+                                        r"\s+(?P<x_fplo_t_dft_plus_u_species_subshell_j__eV>" + RE_f + r")" +
                                         r"\s*$"
                                     )
                                  ),
@@ -501,22 +501,22 @@ class ParserFplo14(object):
             dft_plus_u_per_species_orbital[species][subshell] = {
                 # code-independent orbital data
                 'dft_plus_u_orbital_label': subshell,
-                'dft_plus_u_orbital_U':
-                    section_method['x_fplo_t_dft_plus_u_species_subshell_U'][species_orbital_idx],
-                'dft_plus_u_orbital_J':
-                    section_method['x_fplo_t_dft_plus_u_species_subshell_J'][species_orbital_idx],
+                'dft_plus_u_orbital_u':
+                    section_method['x_fplo_t_dft_plus_u_species_subshell_u'][species_orbital_idx],
+                'dft_plus_u_orbital_j':
+                    section_method['x_fplo_t_dft_plus_u_species_subshell_j'][species_orbital_idx],
                 # code-specific orbital data
                 'x_fplo_dft_plus_u_orbital_species': species,
                 'x_fplo_dft_plus_u_orbital_element':
                     section_method['x_fplo_t_dft_plus_u_species_subshell_element'][species_orbital_idx],
-                'x_fplo_dft_plus_u_orbital_F0':
-                    section_method['x_fplo_t_dft_plus_u_species_subshell_F0'][species_orbital_idx],
-                'x_fplo_dft_plus_u_orbital_F2':
-                    section_method['x_fplo_t_dft_plus_u_species_subshell_F2'][species_orbital_idx],
-                'x_fplo_dft_plus_u_orbital_F4':
-                    section_method['x_fplo_t_dft_plus_u_species_subshell_F4'][species_orbital_idx],
-                'x_fplo_dft_plus_u_orbital_F6':
-                    section_method['x_fplo_t_dft_plus_u_species_subshell_F6'][species_orbital_idx],
+                'x_fplo_dft_plus_u_orbital_f0':
+                    section_method['x_fplo_t_dft_plus_u_species_subshell_f0'][species_orbital_idx],
+                'x_fplo_dft_plus_u_orbital_f2':
+                    section_method['x_fplo_t_dft_plus_u_species_subshell_f2'][species_orbital_idx],
+                'x_fplo_dft_plus_u_orbital_f4':
+                    section_method['x_fplo_t_dft_plus_u_species_subshell_f4'][species_orbital_idx],
+                'x_fplo_dft_plus_u_orbital_f6':
+                    section_method['x_fplo_t_dft_plus_u_species_subshell_f6'][species_orbital_idx],
             }
         return dft_plus_u_per_species_orbital
 
@@ -640,7 +640,7 @@ class ParserFplo14(object):
     def onClose_section_single_configuration_calculation(
             self, backend, gIndex, section):
         backend.addValue('single_configuration_calculation_to_system_ref', self.sectionIdx['system'])
-        backend.addValue('single_configuration_to_calculation_method_ref', self.sectionIdx['method'])
+        backend.addValue('single_configuration_calculation_to_method_ref', self.sectionIdx['method'])
         scf_iter = self.section['scf_iteration']
         backend.addValue(
             'energy_total',
@@ -687,13 +687,13 @@ class ParserFplo14(object):
             self.addSectionDict(backend, section_name, section_dict)
 
     def addSectionDict(self, backend, section_name, section_dict):
-        gIndex = backend.openSection(section_name)
+        gIndex = backend.openSection(metaN(section_name))
         for key, value in sorted(section_dict.items()):
             if isinstance(value, (list,dict)):
-                backend.addValue(key, value)
+                backend.addValue(metaN(key), value)
             else:
-                backend.addValue(key, value)
-        backend.closeSection(section_name, gIndex)
+                backend.addValue(metaN(key), value)
+        backend.closeSection(metaN(section_name), gIndex)
 
 if __name__ == "__main__":
     parser = ParserFplo14()
