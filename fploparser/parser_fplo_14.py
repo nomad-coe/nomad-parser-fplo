@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import setup_paths
 from nomadcore.simple_parser import mainFunction, SimpleMatcher as SM, CachingLevel
 from nomadcore.local_meta_info import loadJsonFile, InfoKindEl
 import os
@@ -24,12 +23,12 @@ import logging
 import nomadcore.unit_conversion.unit_conversion as unit_conversion
 import math
 import numpy as np
-import FploCommon as FploC
+from . import FploCommon as FploC
 import calendar
 from nomadcore.parser_backend import valueForStrValue
-from FploCommon import RE_f, RE_i, cRE_f, cRE_i
+from .FploCommon import RE_f, RE_i, cRE_f, cRE_i
 from nomadcore.parser_backend import valueForStrValue
-import FploInputParser
+from . import FploInputParser
 
 
 LOGGER = logging.getLogger(__name__)
@@ -77,10 +76,10 @@ FPLO_DFT_PLUS_U_FUNCTIONAL = {
 
 class ParserFplo14(object):
     """main place to keep the parser status, open ancillary files,..."""
-    def __init__(self):
+    def __init__(self, metaInfoEnv):
         self.parserInfo = FploC.PARSER_INFO_DEFAULT.copy()
         self.cachingLevelForMetaName = {}
-        for name in FploC.META_INFO.infoKinds:
+        for name in metaInfoEnv.infoKinds:
             # set all temporaries to caching-only
             if name.startswith('x_fplo_t_'):
                 self.cachingLevelForMetaName[name] = CachingLevel.Cache
@@ -98,7 +97,7 @@ class ParserFplo14(object):
 
     def parse(self):
         self.coverageIgnore = re.compile(r"^(?:" + r"|".join(self.coverageIgnoreList) + r")$")
-        mainFunction(self.mainFileDescription(), FploC.META_INFO, self.parserInfo,
+        mainFunction(self.mainFileDescription(), metaInfoEnv, self.parserInfo,
                      cachingLevelForMetaName=self.cachingLevelForMetaName,
                      superContext=self)
 
@@ -695,6 +694,27 @@ class ParserFplo14(object):
                 backend.addValue(key, value)
         backend.closeSection(section_name, gIndex)
 
-if __name__ == "__main__":
-    parser = ParserFplo14()
-    parser.parse()
+
+class FploParser():
+    """ A proper class envolop for running this parser from within python. """
+    def __init__(self, backend, **kwargs):
+        self.backend_factory = backend
+
+    def parse(self, mainfile):
+        from unittest.mock import patch
+        logging.info('fplo parser started')
+        logging.getLogger('nomadcore').setLevel(logging.WARNING)
+        backend = self.backend_factory("fplo.nomadmetainfo.json")
+        parserInfo = {'name': 'fplo-parser', 'version': '1.0'}
+        context = ParserFplo14(backend.metaInfoEnv())
+
+        with patch.object(sys, 'argv', ['<exe>', '--uri', 'nmd://uri', mainfile]):
+            mainFunction(
+                context.mainFileDescription(),
+                None,
+                parserInfo=FploC.PARSER_INFO_DEFAULT.copy(),
+                cachingLevelForMetaName=context.cachingLevelForMetaName,
+                superContext=context,
+                superBackend=backend)
+
+        return backend

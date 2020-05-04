@@ -25,15 +25,13 @@ This module is implemented as follows:
 TODO:
 4) transform AST to metaInfo backend calls
 """
-import setup_paths
 import re
 import sys
 import os
 import logging
 import json
-import FploCommon as FploC
+from . import FploCommon as FploC
 from nomadcore.match_highlighter import ANSI
-from nomadcore.parser_backend import JsonParseEventsWriterBackend
 from nomadcore.caching_backend import CachingLevel, ActiveBackend
 
 LOGGER = logging.getLogger(__name__)

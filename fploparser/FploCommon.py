@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import setup_paths
 import calendar
 import json
 import os
@@ -53,13 +52,13 @@ def re_vec(name, units='', split="\s+"):
 
 # loading metadata from
 # nomad-meta-info/meta_info/nomad_meta_info/fplo.nomadmetainfo.json
-META_INFO = loadJsonFile(
-    filePath=os.path.normpath(os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "../../../../nomad-meta-info/meta_info/nomad_meta_info/fplo.nomadmetainfo.json")),
-    dependencyLoader=None,
-    extraArgsHandling=InfoKindEl.ADD_EXTRA_ARGS,
-    uri=None)[0]
+# META_INFO = loadJsonFile(
+#     filePath=os.path.normpath(os.path.join(
+#         os.path.dirname(os.path.abspath(__file__)),
+#         "../../../../nomad-meta-info/meta_info/nomad_meta_info/fplo.nomadmetainfo.json")),
+#     dependencyLoader=None,
+#     extraArgsHandling=InfoKindEl.ADD_EXTRA_ARGS,
+#     uri=None)[0]
 
 PARSER_INFO_DEFAULT = {
   "name": "parser_fplo",
