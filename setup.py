@@ -24,8 +24,7 @@ def main():
         package_dir={'': './'},
         packages=find_packages(),
         install_requires=[
-            'nomadcore',
-            'nomad'
+            'nomadcore'
         ],
     )
 
