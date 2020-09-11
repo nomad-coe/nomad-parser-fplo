@@ -1,7 +1,0 @@
-code-label: FPLO
-code-label-style: All in capitals
-code-url: https://www.fplo.de/
-parser-dir-name: dependencies/parsers/fplo/
-parser-git-url: https://gitlab.mpcdf.mpg.de/nomad-lab/parser-fplo
-parser-specific: ''
-table-of-files: ''
