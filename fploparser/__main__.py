@@ -16,19 +16,17 @@
 # limitations under the License.
 #
 
-from setuptools import setup, find_packages
+import sys
+import json
+import logging
+
+from nomad.utils import configure_logging
+from nomad.datamodel import EntryArchive
+from fploparser import FploParser
 
 
-def main():
-    setup(
-        name='fploparser',
-        version='1.0',
-        description='NOMAD parser implementation for Fplo.',
-        author='The NOMAD Authors',
-        license='APACHE 2.0',
-        packages=find_packages(exclude=['tests']),
-        install_requires=['nomad-lab'])
-
-
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    configure_logging(console_log_level=logging.DEBUG)
+    archive = EntryArchive()
+    FploParser().parse(sys.argv[1], archive, logging)
+    json.dump(archive.m_to_dict(), sys.stdout, indent=2)

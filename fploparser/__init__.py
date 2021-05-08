@@ -16,4 +16,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .parser_fplo_14 import FploParser
+from .fplo_parser import FploParser
