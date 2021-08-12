@@ -36,18 +36,18 @@ def test_basic(parser):
 
     parser.parse('tests/data/hcp_ti/out', archive, None)
 
-    sec_run = archive.section_run[0]
-    assert sec_run.program_version == '14.00 M-CPA 47'
+    sec_run = archive.run[0]
+    assert sec_run.program.version == '14.00 M-CPA 47'
 
-    sec_system = archive.section_run[0].section_system[0]
-    assert sec_system.lattice_vectors[0][1].magnitude == approx(-1.475e-10)
-    assert sec_system.atom_labels == ['Ti', 'Ti']
-    assert sec_system.atom_positions[1][2].magnitude == approx(-1.17e-10)
+    sec_system = archive.run[0].system[0]
+    assert sec_system.atoms.lattice_vectors[0][1].magnitude == approx(-1.475e-10)
+    assert sec_system.atoms.labels == ['Ti', 'Ti']
+    assert sec_system.atoms.positions[1][2].magnitude == approx(-1.17e-10)
 
-    sec_sccs = sec_run.section_single_configuration_calculation
+    sec_sccs = sec_run.calculation
     assert len(sec_sccs) == 14
-    assert sec_sccs[5].energy_total.magnitude == approx(-2.73593178e-16)
-    assert sec_sccs[8].energy_reference_fermi[0].magnitude == approx(-2.47707723e-20)
+    assert sec_sccs[5].energy.total.value.magnitude == approx(-2.73593178e-16)
+    assert sec_sccs[8].energy.fermi.magnitude == approx(-2.47707723e-20)
 
 
 def test_1(parser):
@@ -55,4 +55,4 @@ def test_1(parser):
 
     parser.parse('tests/data/dhcp_gd/out', archive, None)
 
-    assert len(archive.section_run[0].section_system[0].atom_positions) == 4
+    assert len(archive.run[0].system[0].atoms.positions) == 4
