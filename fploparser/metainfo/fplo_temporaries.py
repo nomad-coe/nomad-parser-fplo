@@ -25,6 +25,9 @@ from nomad.metainfo import (  # pylint: disable=unused-import
 from nomad.datamodel.metainfo import run
 
 
+m_package = Package()
+
+
 class Run(run.run.Run):
 
     m_def = Section(validate=False, extends_base_section=True)
